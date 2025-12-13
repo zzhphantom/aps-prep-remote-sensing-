@@ -10,7 +10,7 @@ import {
 // -----------------------------------------------------------------------------
 // Gemini API 配置
 // -----------------------------------------------------------------------------
-const apiKey = ""; 
+const apiKey = "AIzaSyByXIQqk0INBioBN92DLuKTNBpfHO8BhpM"; 
 
 const callGemini = async (prompt) => {
   try {
@@ -33,7 +33,7 @@ const callGemini = async (prompt) => {
 };
 
 // -----------------------------------------------------------------------------
-// 14门核心课程全量深度数据 (Deep Logic Expansion)
+// 14门核心课程全量深度数据
 // -----------------------------------------------------------------------------
 
 const COURSE_DATA = [
@@ -46,73 +46,71 @@ const COURSE_DATA = [
         summary: { cn: "遥感科学基石：建立电磁波与地表交互的物理模型及成像基础。", en: "Cornerstone of RS: Physical models of EM wave-surface interaction & imaging." },
         goals: { cn: "精通电磁波谱、大气传输、地物光谱特征及四大分辨率权衡。", en: "Master EM spectrum, Atmospheric transfer, Spectral signatures, 4 Resolutions." },
         logicTree: {
-          label: { cn: "遥感物理链路", en: "Physical Chain" },
+          label: { cn: "遥感全链路", en: "RS Full Chain" },
           children: [
             {
-              label: { cn: "1. 辐射源与传输", en: "1. Source & Transfer" },
+              label: { cn: "1. 物理基础", en: "1. Physical Basis" },
               children: [
-                { label: { cn: "黑体辐射", en: "Blackbody" }, desc: { cn: "普朗克定律(Planck's Law)描述能量分布；维恩位移定律决定峰值波长。", en: "Planck's Law (Distribution) & Wien's Law (Peak Wavelength)." }, heavy: true },
-                { label: { cn: "大气窗口", en: "Atm Windows" }, desc: { cn: "可见光(0.4-0.7)、近红外(0.7-1.1)、热红外(3-5/8-14)、微波(1mm-1m)。", en: "VIS, NIR, TIR (3-5/8-14um), Microwave." } },
-                { label: { cn: "散射机制", en: "Scattering" }, desc: { cn: "瑞利散射(粒子<波长, 蓝天) vs 米氏散射(粒子≈波长, 云雾)。", en: "Rayleigh (Blue sky) vs Mie (Clouds/Haze)." } }
+                { label: { cn: "辐射源", en: "Source" }, desc: { cn: "普朗克定律(黑体辐射)与太阳常数。", en: "Planck's Law & Solar Constant." }, heavy: true },
+                { label: { cn: "大气传输", en: "Atmosphere" }, desc: { cn: "大气窗口(透过率)与散射(瑞利/米氏)。", en: "Atm Windows & Scattering (Rayleigh/Mie)." }, heavy: true },
+                { label: { cn: "地物光谱", en: "Spectra" }, desc: { cn: "植被(红边/近红外峰)、水(吸收)、土(线性)。", en: "Veg(RedEdge), Water(Absorb), Soil(Linear)." } }
               ]
             },
             {
-              label: { cn: "2. 地物光谱响应", en: "2. Spectral Response" },
+              label: { cn: "2. 成像系统", en: "2. Imaging" },
               children: [
-                { label: { cn: "植被", en: "Vegetation" }, desc: { cn: "可见光吸收(叶绿素)、近红外高反(细胞结构)、红边效应。", en: "VIS absorption (Chlorophyll), NIR reflection (Cell), Red Edge." }, heavy: true },
-                { label: { cn: "水体", en: "Water" }, desc: { cn: "近红外/短波红外强吸收；叶绿素/悬浮物增加可见光反射。", en: "NIR/SWIR absorption; Chl/Sediment increases VIS reflection." } },
-                { label: { cn: "土壤", en: "Soil" }, desc: { cn: "反射率随波长线性增加；受含水量、有机质、粗糙度影响。", en: "Linear increase; affected by moisture, organic matter." } }
+                { label: { cn: "分辨率", en: "Resolutions" }, desc: { cn: "空间、光谱、辐射、时间分辨率的相互制约。", en: "Constraints: Spatial/Spectral/Rad/Temp." }, heavy: true },
+                { label: { cn: "扫描方式", en: "Scanning" }, desc: { cn: "推扫式(Pushbroom, 高信噪比) vs 摆扫式(Whiskbroom)。", en: "Pushbroom (High SNR) vs Whiskbroom." } }
               ]
             },
             {
-              label: { cn: "3. 传感器特性", en: "3. Sensor Traits" },
+              label: { cn: "3. 处理与解译", en: "3. Proc & Interp" },
               children: [
-                { label: { cn: "四大分辨率", en: "Resolutions" }, desc: { cn: "空间(IFOV)、光谱(波段宽窄)、辐射(SNR/位数)、时间(重访)。", en: "Spatial, Spectral (Bandwidth), Radiometric (Bit depth), Temporal." }, heavy: true },
-                { label: { cn: "扫描几何", en: "Geometry" }, desc: { cn: "全景畸变、全景投影差、地球自转影响。", en: "Panoramic distortion, Earth rotation skew." } }
+                { label: { cn: "预处理", en: "Pre-proc" }, desc: { cn: "辐射定标、大气校正、几何校正。", en: "Rad Cal, Atm Corr, Geo Corr." } },
+                { label: { cn: "图像解译", en: "Interpretation" }, desc: { cn: "目视解译八大要素与计算机分类基础。", en: "Visual Keys & Basic Classification." } }
               ]
             }
           ]
         },
         terms: [
-          { cn: "红边", en: "Red Edge", desc_cn: "植被在0.7μm附近反射率急剧上升的区域，反映植被健康状况。", desc_en: "Sharp rise in reflectance near 0.7μm, indicating plant health." },
-          { cn: "大气校正", en: "Atmospheric Correction", desc_cn: "消除大气散射和吸收，将辐亮度转换为地表反射率。", desc_en: "Converting radiance to surface reflectance by removing atm effects." }
+          { cn: "大气窗口", en: "Atmospheric Window", desc_cn: "大气透过率较高的波段，决定了传感器的通道设计。", desc_en: "Spectral bands with high transmittance guiding sensor design." },
+          { cn: "光谱特征", en: "Spectral Signature", desc_cn: "地物反射率随波长变化的独特规律。", desc_en: "Unique reflectance variation with wavelength." }
         ]
       },
       {
         id: "c2",
         name: "Microwave Remote Sensing (微波遥感)",
-        summary: { cn: "利用微波波段进行全天时、全天候的主动观测。", en: "All-weather active sensing using microwave bands." },
+        summary: { cn: "利用长波(微波)进行全天时、全天候的主动观测技术。", en: "All-weather active sensing using microwave bands." },
         goals: { cn: "透彻理解SAR成像几何、多普勒原理、极化分解及InSAR干涉测量。", en: "Deep understanding of SAR geometry, Doppler, PolSAR, and InSAR." },
         logicTree: {
-          label: { cn: "SAR 系统深度解析", en: "SAR System Deep Dive" },
+          label: { cn: "微波体系", en: "Microwave Sys" },
           children: [
             {
-              label: { cn: "1. 成像机理", en: "1. Imaging Physics" },
+              label: { cn: "1. 成像机理", en: "1. Mechanism" },
               children: [
-                { label: { cn: "测距原理", en: "Ranging" }, desc: { cn: "距离向分辨率取决于脉冲宽度(通过Chirp脉冲压缩优化)。", en: "Range Res depends on pulse width (Chirp compression)." } },
-                { label: { cn: "方位原理", en: "Azimuth" }, desc: { cn: "利用多普勒频移合成虚拟长孔径(L = λR/L_antenna)。", en: "Doppler synthesis creates virtual aperture." }, heavy: true },
-                { label: { cn: "几何畸变", en: "Distortions" }, desc: { cn: "透视收缩(Foreshortening)、叠掩(Layover, 顶底倒置)、阴影(Shadow)。", en: "Specific to slant-range geometry." } }
+                { label: { cn: "合成孔径", en: "SAR Principle" }, desc: { cn: "利用多普勒效应合成虚拟长天线(提高方位分辨率)。", en: "Doppler synthesis for high azimuth res." }, heavy: true },
+                { label: { cn: "几何畸变", en: "Distortions" }, desc: { cn: "透视收缩、叠掩(顶底倒置)、阴影。", en: "Foreshortening, Layover, Shadow." } }
               ]
             },
             {
-              label: { cn: "2. 信号特性", en: "2. Signal Traits" },
+              label: { cn: "2. 散射特性", en: "2. Scattering" },
               children: [
-                { label: { cn: "穿透性", en: "Penetration" }, desc: { cn: "波长越长穿透越深 (L波段穿透树冠 vs X波段树冠表面)。", en: "L-band (Canopy) vs X-band (Surface)." } },
-                { label: { cn: "极化机制", en: "Polarization" }, desc: { cn: "HH/VV(表面散射)、HV/VH(体积散射/去极化)。", en: "Surface scattering vs Volume scattering." } }
+                { label: { cn: "物理参数", en: "Parameters" }, desc: { cn: "粗糙度(漫反射)与介电常数(含水量)。", en: "Roughness & Dielectric Constant." } },
+                { label: { cn: "极化", en: "Polarization" }, desc: { cn: "HH/HV/VV/VH 反映地物结构与方向。", en: "Polarization reflects structure." } }
               ]
             },
             {
-              label: { cn: "3. InSAR干涉", en: "3. InSAR" },
+              label: { cn: "3. 高级技术", en: "3. Advanced" },
               children: [
-                { label: { cn: "基本原理", en: "Basics" }, desc: { cn: "相位差 = 地形相位 + 形变相位 + 大气相位 + 噪声。", en: "Phase diff = Topo + Deformation + Atm + Noise." }, heavy: true },
-                { label: { cn: "处理流程", en: "Workflow" }, desc: { cn: "配准 -> 干涉图 -> 去平地 -> 相位解缠 -> 地理编码。", en: "Coreg -> Interferogram -> Flatten -> Unwrap -> Geocode." } }
+                { label: { cn: "InSAR", en: "Interferometry" }, desc: { cn: "相位差 -> 高程(DEM)或微小形变。", en: "Phase Diff -> DEM/Deformation." }, heavy: true },
+                { label: { cn: "PolSAR", en: "Polarimetry" }, desc: { cn: "极化分解(Pauli/Freeman)提取散射机制。", en: "Decomposition for scattering mech." } }
               ]
             }
           ]
         },
         terms: [
-          { cn: "相位解缠", en: "Phase Unwrapping", desc_cn: "将周期性的缠绕相位(-π, π)恢复为连续的绝对相位。", desc_en: "Resolving 2π ambiguities to continuous phase." },
-          { cn: "基线", en: "Baseline", desc_cn: "两次观测时卫星位置的空间距离，影响高程灵敏度。", desc_en: "Spatial separation between satellite tracks." }
+          { cn: "后向散射系数", en: "Backscattering Coeff (σ0)", desc_cn: "单位面积目标的散射强度，与粗糙度和介电常数有关。", desc_en: "Scattering intensity per unit area." },
+          { cn: "相干斑", en: "Speckle Noise", desc_cn: "相干成像特有的椒盐噪声，需多视处理去除。", desc_en: "Salt-and-pepper noise in coherent systems." }
         ]
       },
       {
@@ -121,35 +119,41 @@ const COURSE_DATA = [
         summary: { cn: "基于热辐射理论反演地表温度(LST)与发射率。", en: "Retrieving LST and emissivity based on thermal radiation theory." },
         goals: { cn: "掌握普朗克定律、基尔霍夫定律、分裂窗算法及城市热岛应用。", en: "Master Planck's Law, Kirchhoff, Split-Window, UHI." },
         logicTree: {
-          label: { cn: "LST 反演体系", en: "LST Retrieval Sys" },
+          label: { cn: "热红外反演", en: "TIR Retrieval" },
           children: [
             {
-              label: { cn: "1. 物理定律", en: "1. Physics" },
+              label: { cn: "1. 物理定律", en: "1. Physics Laws" },
               children: [
-                { label: { cn: "普朗克定律", en: "Planck's" }, desc: { cn: "描述黑体辐射能量随波长和温度的分布。", en: "Radiance distribution over wavelength/temp." } },
-                { label: { cn: "基尔霍夫", en: "Kirchhoff" }, desc: { cn: "热平衡状态下：发射率(ε) = 吸收率(α)。", en: "Emissivity equals Absorptivity." }, heavy: true }
+                { label: { cn: "基础定律", en: "Basics" }, desc: { cn: "普朗克定律(能量分布)、斯蒂芬-玻尔兹曼定律(总能量)。", en: "Planck's & Stefan-Boltzmann Law." } },
+                { label: { cn: "基尔霍夫定律", en: "Kirchhoff" }, desc: { cn: "热平衡时：发射率 = 吸收率。", en: "Emissivity = Absorptivity." }, heavy: true }
               ]
             },
             {
-              label: { cn: "2. 反演算法", en: "2. Algorithms" },
+              label: { cn: "2. 反演难点", en: "2. Challenges" },
               children: [
-                { label: { cn: "单通道", en: "Single-Channel" }, desc: { cn: "需极其精确的大气廓线数据(探空数据)。", en: "Requires precise atmospheric profiles." } },
-                { label: { cn: "分裂窗(SW)", en: "Split-Window" }, desc: { cn: "利用10-12μm波段对水汽吸收的差异消除大气影响。", en: "Using differential absorption to remove atm." }, heavy: true },
-                { label: { cn: "TES", en: "TES" }, desc: { cn: "温度与发射率分离：利用MMD(最小最大差)经验关系。", en: "Temp-Emissivity Separation using MMD." } }
+                { label: { cn: "病态问题", en: "Ill-posed" }, desc: { cn: "N个波段解N+1个未知数(1温度+N发射率)。", en: "N bands vs N+1 unknowns." }, heavy: true },
+                { label: { cn: "大气影响", en: "Atm Effects" }, desc: { cn: "水汽对热红外有强烈吸收。", en: "Strong water vapor absorption." } }
               ]
             },
             {
-              label: { cn: "3. 典型应用", en: "3. Apps" },
+              label: { cn: "3. 算法模型", en: "3. Algorithms" },
               children: [
-                { label: { cn: "城市热岛", en: "UHI" }, desc: { cn: "与不透水面(Impervious Surface)比例正相关。", en: "Correlated with impervious surfaces." } },
-                { label: { cn: "土壤水分", en: "Soil Moisture" }, desc: { cn: "利用热惯量(Thermal Inertia)原理：水热容大，昼夜温差小。", en: "Thermal Inertia: Water dampens temp change." } }
+                { label: { cn: "分裂窗算法", en: "Split-Window" }, desc: { cn: "利用双通道(11/12μm)吸收差异消大气。", en: "Diff absorption in dual channels." }, heavy: true },
+                { label: { cn: "TES算法", en: "TES" }, desc: { cn: "温度与发射率分离算法。", en: "Temp-Emissivity Separation." } }
+              ]
+            },
+            {
+              label: { cn: "4. 应用", en: "4. Apps" },
+              children: [
+                { label: { cn: "热岛效应", en: "UHI" }, desc: { cn: "城市不透水面导致高温。", en: "Urban Heat Island." } },
+                { label: { cn: "林火/矿物", en: "Fire/Mineral" }, desc: { cn: "高温异常探测与岩石识别。", en: "Thermal anomalies & Rock ID." } }
               ]
             }
           ]
         },
         terms: [
-          { cn: "热惯量", en: "Thermal Inertia", desc_cn: "物质阻碍温度变化的能力，用于区分岩石、土壤和水。", desc_en: "Resistance to temperature change." },
-          { cn: "亮温", en: "Brightness Temp", desc_cn: "假设物体为黑体(ε=1)时传感器观测到的等效温度。", desc_en: "Temp assuming object is a blackbody." }
+          { cn: "发射率", en: "Emissivity", desc_cn: "物体辐射能力与同温黑体之比(0-1)。", desc_en: "Ratio of radiation to blackbody (0-1)." },
+          { cn: "亮温", en: "Brightness Temp", desc_cn: "假设物体为黑体时的观测温度。", desc_en: "Temp assuming object is a blackbody." }
         ]
       },
       {
@@ -221,7 +225,7 @@ const COURSE_DATA = [
         },
         terms: [
           { cn: "GSD", en: "Ground Sample Distance", desc_cn: "地面采样距离，即照片上一个像素代表的实际地面大小。", desc_en: "Ground size of one pixel." },
-          { cn: "SfM", en: "Structure from Motion", desc_cn: "利用二维图像序列的运动视差恢复三维结构的算法。", desc_en: "Reconstructing 3D structure from 2D image motion." }
+          { cn: "SfM", en: "Structure from Motion", desc_cn: "利用二维图像序列的运动视差恢复三维结构的计算机视觉算法。", desc_en: "Reconstructing 3D from 2D image motion." }
         ]
       },
       {
@@ -453,22 +457,16 @@ const COURSE_DATA = [
             {
               label: { cn: "1. 基础操作", en: "1. Basic Ops" },
               children: [
-                { label: { cn: "显示增强", en: "Display" }, desc: { cn: "线性拉伸(2%)、直方图匹配、假彩色合成(432 vs 543)。", en: "Linear stretch, FCC combinations." } },
-                { label: { cn: "统计查看", en: "Stats" }, desc: { cn: "查看DN值分布、散点图分析波段相关性。", en: "Histograms & Scatter plots." } }
+                { label: { cn: "数据显示", en: "Display" }, desc: { cn: "波段组合(真彩色vs标准假彩色)。", en: "Band Composites (True vs False Color)." } },
+                { label: { cn: "统计特征", en: "Stats" }, desc: { cn: "查看DN值分布、散点图分析波段相关性。", en: "Histograms & Scatter plots." } }
               ]
             },
             {
-              label: { cn: "2. 几何校正", en: "2. Geo-Correction" },
+              label: { cn: "2. 核心实验", en: "2. Core Labs" },
               children: [
-                { label: { cn: "GCP选取", en: "GCPs" }, desc: { cn: "特征明显、分布均匀(道路交叉口)。", en: "Distinct features, uniform distribution." }, heavy: true },
-                { label: { cn: "重采样", en: "Resampling" }, desc: { cn: "最近邻(保光谱)、双线性(平滑)、三次卷积。", en: "Nearest Neighbor vs Bilinear/Cubic." } }
-              ]
-            },
-            {
-              label: { cn: "3. 图像分类", en: "3. Classification" },
-              children: [
-                { label: { cn: "ROI建立", en: "ROI" }, desc: { cn: "选取纯净像元作为训练样本，计算分离度。", en: "Pure pixels training samples, separability." } },
-                { label: { cn: "执行分类", en: "Execute" }, desc: { cn: "运行最大似然法，进行多数分析(Majority)后处理。", en: "Run MLC, post-class smoothing." } }
+                { label: { cn: "几何校正", en: "Geo Corr" }, desc: { cn: "选取地面控制点(GCP)进行配准。", en: "Registration using GCPs." }, heavy: true },
+                { label: { cn: "图像融合", en: "Fusion" }, desc: { cn: "全色与多光谱融合(Gram-Schmidt)。", en: "Pan-sharpening." } },
+                { label: { cn: "分类实验", en: "Class Lab" }, desc: { cn: "建立ROI，执行最大似然分类。", en: "ROI & MLC Classification." } }
               ]
             }
           ]
@@ -602,15 +600,19 @@ const BiText = ({ cn, en, label, defaultLang = 'cn', className = "" }) => {
   );
 };
 
+// -----------------------------------------------------------------------------
+// 思维导图节点组件 (稳定性增强)
+// -----------------------------------------------------------------------------
 const TreeNode = ({ node, lang, isRoot = false, isLast = false }) => {
   const [expanded, setExpanded] = useState(true);
   
-  if (!node) return null;
+  if (!node) return null; // Null check
 
+  // Safe access properties
   const label = node.label ? (node.label[lang] || node.label.cn || node.label) : "Node";
   const desc = node.desc ? (node.desc[lang] || node.desc.cn || node.desc) : "";
   const isHeavy = node.heavy || false;
-  const hasChildren = node.children && node.children.length > 0;
+  const hasChildren = node.children && Array.isArray(node.children) && node.children.length > 0;
 
   return (
     <div className={`relative ${!isRoot ? 'ml-10' : ''}`}>
@@ -678,6 +680,9 @@ const TreeNode = ({ node, lang, isRoot = false, isLast = false }) => {
   );
 };
 
+// -----------------------------------------------------------------------------
+// 无限画布容器
+// -----------------------------------------------------------------------------
 const LogicMindMap = ({ data }) => {
   const [lang, setLang] = useState('cn');
   const containerRef = useRef(null);
@@ -688,6 +693,7 @@ const LogicMindMap = ({ data }) => {
   const [initialDistance, setInitialDistance] = useState(null);
   const [initialScale, setInitialScale] = useState(1);
 
+  // Mouse Handlers
   const handlePointerDown = (e) => {
     setIsDragging(true);
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -697,7 +703,7 @@ const LogicMindMap = ({ data }) => {
 
   const handlePointerMove = (e) => {
     if (!isDragging) return;
-    if (e.touches && e.touches.length === 2) return;
+    if (e.touches && e.touches.length === 2) return; // Ignore pinch
 
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -713,11 +719,13 @@ const LogicMindMap = ({ data }) => {
     setInitialDistance(null); 
   };
 
+  // Touch Handlers (Pinch Zoom)
   const handleTouchStart = (e) => {
     if (e.touches.length === 2) {
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const dist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
       setInitialDistance(dist);
       setInitialScale(scale);
     } else {
@@ -728,10 +736,10 @@ const LogicMindMap = ({ data }) => {
   const handleTouchMove = (e) => {
     if (e.touches.length === 2 && initialDistance !== null) {
       e.preventDefault(); 
-      const touch1 = e.touches[0];
-      const touch2 = e.touches[1];
-      const currentDist = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
-      
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
       const newScale = initialScale * (currentDist / initialDistance);
       setScale(Math.min(Math.max(0.5, newScale), 3));
     } else {
@@ -740,31 +748,33 @@ const LogicMindMap = ({ data }) => {
   };
 
   if (!data || !data.label) return (
-    <div className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded text-slate-400 text-xs text-center flex flex-col items-center justify-center h-32">
+    <div className="p-8 bg-slate-50 border border-dashed border-slate-300 rounded-xl text-slate-400 text-xs text-center flex flex-col items-center justify-center h-48">
       <Network className="w-8 h-8 text-slate-300 mb-2" />
-      <span className="block">暂未录入逻辑导图</span>
-      <span className="text-[10px] opacity-70">(Logic Map Not Available)</span>
+      <span className="block font-medium">暂未录入逻辑导图</span>
+      <span className="text-[10px] opacity-70 mt-1">(Logic Map Not Available)</span>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-[500px] border border-slate-200 rounded-xl overflow-hidden bg-slate-50 relative group select-none">
+    <div className="flex flex-col h-[500px] border border-slate-200 rounded-xl overflow-hidden bg-slate-50 relative group select-none shadow-inner">
+      {/* Top Bar */}
       <div className="absolute top-4 left-4 z-30 flex gap-2">
-         <div className="flex items-center text-xs font-bold text-slate-400 uppercase tracking-wider bg-white/80 backdrop-blur px-2 py-1 rounded border border-slate-200 shadow-sm">
-            <Network className="w-3 h-3 mr-1" /> Logic Map
+         <div className="flex items-center text-xs font-bold text-slate-500 uppercase tracking-wider bg-white/90 backdrop-blur px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+            <Network className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> Logic Map
          </div>
          <button 
             onClick={() => setLang(lang === 'cn' ? 'en' : 'cn')}
-            className="flex items-center space-x-1 px-2 py-1 rounded bg-white/80 backdrop-blur shadow-sm text-xs font-mono text-slate-600 hover:text-teal-600 border border-slate-200"
+            className="flex items-center space-x-1 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur shadow-sm text-xs font-mono text-slate-600 hover:text-teal-600 border border-slate-200 transition-colors"
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className="w-3.5 h-3.5" />
             <span>{lang === 'cn' ? '中' : 'EN'}</span>
           </button>
       </div>
 
+      {/* Canvas Area */}
       <div 
         ref={containerRef}
-        className="flex-grow w-full h-full cursor-move touch-none overflow-hidden relative bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px]"
+        className="flex-grow w-full h-full cursor-move touch-none overflow-hidden relative bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:20px_20px]"
         onMouseDown={handlePointerDown}
         onMouseMove={handlePointerMove}
         onMouseUp={handlePointerUp}
@@ -777,7 +787,7 @@ const LogicMindMap = ({ data }) => {
           style={{ 
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: '0 0',
-            transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+            transition: isDragging ? 'none' : 'transform 0.15s ease-out'
           }}
           className="absolute top-10 left-10 p-10 min-w-max"
         >
@@ -785,15 +795,20 @@ const LogicMindMap = ({ data }) => {
         </div>
       </div>
 
-      <div className="absolute bottom-4 right-4 z-30 flex flex-col gap-2 bg-white/90 backdrop-blur border border-slate-200 p-1.5 rounded-lg shadow-lg">
-        <button onClick={() => setScale(s => Math.min(s + 0.2, 3))} className="p-1.5 hover:bg-slate-100 rounded text-slate-600"><Plus className="w-5 h-5"/></button>
-        <button onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} className="p-1.5 hover:bg-slate-100 rounded text-slate-600"><Minus className="w-5 h-5"/></button>
-        <button onClick={() => { setScale(1); setPosition({x:0, y:0}); }} className="p-1.5 hover:bg-slate-100 rounded text-slate-600" title="Reset View"><Maximize className="w-4 h-4"/></button>
+      {/* Controls */}
+      <div className="absolute bottom-4 right-4 z-30 flex flex-col gap-2">
+        <div className="flex flex-col bg-white/90 backdrop-blur border border-slate-200 p-1 rounded-lg shadow-lg">
+          <button onClick={() => setScale(s => Math.min(s + 0.2, 3))} className="p-2 hover:bg-slate-100 rounded-md text-slate-600 transition-colors"><Plus className="w-5 h-5"/></button>
+          <button onClick={() => setScale(s => Math.max(s - 0.2, 0.5))} className="p-2 hover:bg-slate-100 rounded-md text-slate-600 transition-colors"><Minus className="w-5 h-5"/></button>
+          <div className="h-[1px] bg-slate-200 my-1 mx-2"></div>
+          <button onClick={() => { setScale(1); setPosition({x:0, y:0}); }} className="p-2 hover:bg-slate-100 rounded-md text-slate-600 transition-colors" title="Reset View"><Maximize className="w-4 h-4"/></button>
+        </div>
       </div>
       
-      <div className="absolute bottom-4 left-4 z-20 pointer-events-none opacity-50 text-[10px] text-slate-400 flex flex-col gap-1">
-        <span className="flex items-center"><Move className="w-3 h-3 mr-1"/> Drag</span>
-        <span className="flex items-center"><Maximize className="w-3 h-3 mr-1"/> Zoom</span>
+      {/* Hint */}
+      <div className="absolute bottom-4 left-4 z-20 pointer-events-none opacity-40 text-[10px] text-slate-500 flex flex-col gap-1 bg-white/50 p-2 rounded-lg backdrop-blur-sm">
+        <span className="flex items-center"><Move className="w-3 h-3 mr-1.5"/> Drag to Pan</span>
+        <span className="flex items-center"><Maximize className="w-3 h-3 mr-1.5"/> Pinch to Zoom</span>
       </div>
     </div>
   );
@@ -807,6 +822,9 @@ const LoadingDots = () => (
   </div>
 );
 
+// -----------------------------------------------------------------------------
+// 课程详情弹窗
+// -----------------------------------------------------------------------------
 const CourseModal = ({ course, onClose }) => {
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState("");
@@ -831,60 +849,70 @@ const CourseModal = ({ course, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in duration-200 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-lg sm:rounded-2xl rounded-t-2xl h-[90vh] flex flex-col shadow-2xl">
-        <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50 sm:rounded-t-2xl shrink-0">
-          <div className="flex-1">
-            <h3 className="font-bold text-lg text-slate-800 leading-tight pr-4">{course.name}</h3>
-            <span className="text-xs font-mono text-teal-600 bg-teal-50 px-2 py-0.5 rounded mt-2 inline-block">APS CORE</span>
+      <div className="bg-white w-full max-w-lg sm:rounded-2xl rounded-t-2xl h-[90vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom-4 duration-300">
+        
+        {/* Modal Header */}
+        <div className="p-5 border-b border-slate-100 flex justify-between items-start bg-slate-50/80 backdrop-blur-sm sm:rounded-t-2xl shrink-0 sticky top-0 z-10">
+          <div className="flex-1 mr-4">
+            <h3 className="font-bold text-lg text-slate-800 leading-snug">{course.name}</h3>
+            <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded mt-1.5 inline-block uppercase tracking-wide">
+              APS Core Module
+            </span>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition-colors">
-            <X className="w-6 h-6 text-slate-500" />
+          <button onClick={onClose} className="p-1.5 bg-white border border-slate-200 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-5 space-y-8 pb-20">
+        {/* Modal Content - Scrollable */}
+        <div className="overflow-y-auto p-5 space-y-8 pb-24">
+          
+          {/* Summary Section */}
           <BiText 
             label={<><FileText className="w-4 h-4 mr-2" /> 一句话概述 (Summary)</>}
-            cn={<div className="bg-blue-50 text-blue-900 p-3 rounded-lg text-sm leading-relaxed border border-blue-100">{course.summary?.cn || "暂无描述"}</div>}
-            en={<div className="bg-indigo-50 text-indigo-900 p-3 rounded-lg text-sm leading-relaxed border border-indigo-100 font-medium">{course.summary?.en || "No description"}</div>}
+            cn={<div className="bg-blue-50 text-blue-900 p-4 rounded-xl text-sm leading-relaxed border border-blue-100 shadow-sm">{course.summary?.cn || "暂无描述"}</div>}
+            en={<div className="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100 shadow-sm font-medium">{course.summary?.en || "No description"}</div>}
             defaultLang="cn"
           />
 
+          {/* Goals Section */}
           <BiText 
             label={<><Target className="w-4 h-4 mr-2" /> 核心目标 (Goals)</>}
-            cn={<p className="text-slate-700 text-sm leading-relaxed pl-1">{course.goals?.cn || "暂无目标"}</p>}
-            en={<p className="text-slate-700 text-sm leading-relaxed pl-1 font-medium">{course.goals?.en || "No goals"}</p>}
+            cn={<p className="text-slate-700 text-sm leading-relaxed pl-1 border-l-2 border-teal-500 ml-1 py-1">{course.goals?.cn || "暂无目标"}</p>}
+            en={<p className="text-slate-700 text-sm leading-relaxed pl-1 border-l-2 border-indigo-500 ml-1 py-1 font-medium">{course.goals?.en || "No goals"}</p>}
             defaultLang="cn"
           />
 
+          {/* Logic Map Section */}
           <div className="py-2">
             <LogicMindMap data={course.logicTree} />
           </div>
 
+          {/* Terminology Section */}
           {course.terms && course.terms.length > 0 && (
             <div>
-              <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
                 <Globe className="w-4 h-4 mr-2" /> 核心术语库 (Terminology)
               </h4>
               <div className="grid grid-cols-1 gap-3">
                 {course.terms.map((term, idx) => (
-                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-teal-300 transition-all group">
+                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-teal-400 hover:shadow-md transition-all group">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h5 className="font-bold text-teal-700 text-base">{term.en}</h5>
-                        <span className="inline-block mt-1 font-medium text-slate-600 text-xs bg-slate-100 px-2 py-0.5 rounded">{term.cn}</span>
+                        <span className="inline-block mt-1.5 font-medium text-slate-600 text-xs bg-slate-100 px-2 py-0.5 rounded border border-slate-200">{term.cn}</span>
                       </div>
                     </div>
                     <BiText 
                       cn={
-                        <div className="text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-2">
-                          <span className="text-xs font-bold text-slate-400 mr-1 block mb-1">中文释义:</span> 
+                        <div className="text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-2.5">
+                          <span className="text-[10px] font-bold text-slate-400 mr-1.5 uppercase tracking-wide">Explain</span> 
                           {term.desc_cn}
                         </div>
                       }
                       en={
-                        <div className="text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-2 font-medium">
-                          <span className="text-xs font-bold text-slate-400 mr-1 block mb-1">English Definition:</span> 
+                        <div className="text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-2.5 font-medium">
+                          <span className="text-[10px] font-bold text-slate-400 mr-1.5 uppercase tracking-wide">Explain</span> 
                           {term.desc_en}
                         </div>
                       }
@@ -896,28 +924,29 @@ const CourseModal = ({ course, onClose }) => {
             </div>
           )}
 
-          <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
-            <h4 className="flex items-center text-sm font-bold text-purple-700 uppercase tracking-wider mb-2">
+          {/* AI Assistant Section */}
+          <div className="bg-gradient-to-br from-purple-50 to-white rounded-xl p-5 border border-purple-100 shadow-sm">
+            <h4 className="flex items-center text-sm font-bold text-purple-700 uppercase tracking-wider mb-3">
               <Sparkles className="w-4 h-4 mr-2" /> AI 深度追问
             </h4>
-            <div className="flex gap-2 mb-3">
+            <div className="flex gap-2 mb-4">
               <input 
                 type="text" 
                 value={aiQuery}
                 onChange={(e) => setAiQuery(e.target.value)}
                 placeholder="例如：为什么SAR会有阴影？"
-                className="flex-grow text-sm p-2 border border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none bg-white"
+                className="flex-grow text-sm p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white shadow-inner"
               />
               <button 
                 onClick={handleAiAsk}
                 disabled={loading}
-                className="bg-purple-600 text-white px-4 py-1 rounded-lg text-sm hover:bg-purple-700 transition-colors disabled:opacity-50 font-medium"
+                className="bg-purple-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md shadow-purple-200"
               >
                 {loading ? "..." : "提问"}
               </button>
             </div>
             {aiResponse && (
-              <div className="bg-white p-3 rounded-lg text-sm text-slate-700 leading-relaxed whitespace-pre-wrap border border-purple-100 shadow-sm animate-fade-in">
+              <div className="bg-white p-4 rounded-xl text-sm text-slate-700 leading-relaxed whitespace-pre-wrap border border-purple-100 shadow-sm animate-fade-in">
                 {aiResponse}
               </div>
             )}
@@ -928,15 +957,18 @@ const CourseModal = ({ course, onClose }) => {
   );
 };
 
+// -----------------------------------------------------------------------------
+// 课程列表 (列表页)
+// -----------------------------------------------------------------------------
 const CourseList = () => {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [expandedCat, setExpandedCat] = useState("遥感基础类 (RS Fundamentals)");
 
   return (
-    <div className="space-y-4 pb-24">
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl text-white shadow-lg mb-6">
+    <div className="space-y-6 pb-24">
+      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl text-white shadow-lg shadow-blue-200">
         <h2 className="text-xl font-bold mb-1 flex items-center"><BookOpen className="w-5 h-5 mr-2"/> 核心课程栈</h2>
-        <p className="text-blue-100 text-xs opacity-90 mt-2">
+        <p className="text-blue-100 text-xs opacity-90 mt-2 font-medium">
           包含14门遥感基础类核心课程的双语逻辑树与定义库。
         </p>
       </div>
@@ -945,30 +977,36 @@ const CourseList = () => {
         <div key={idx} className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
           <button
             onClick={() => setExpandedCat(expandedCat === cat.category ? null : cat.category)}
-            className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+            className="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-colors border-b border-slate-100"
           >
-            <span className="font-bold text-slate-700 text-sm">{cat.category}</span>
+            <span className="font-bold text-slate-700 text-sm flex items-center">
+              <span className="w-1.5 h-4 bg-teal-500 rounded-full mr-2"></span>
+              {cat.category}
+            </span>
             {expandedCat === cat.category ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
           </button>
           
           {expandedCat === cat.category && (
-            <div className="p-2 grid grid-cols-1 gap-2">
+            <div className="p-3 grid grid-cols-1 gap-2 bg-slate-50/50">
               {cat.courses.map((course) => (
                 <div 
                   key={course.id}
                   onClick={() => setSelectedCourse(course)}
-                  className="p-3 bg-white border border-slate-100 rounded-lg hover:border-teal-400 hover:shadow-md transition-all cursor-pointer group flex justify-between items-center"
+                  className="p-4 bg-white border border-slate-200 rounded-xl hover:border-teal-400 hover:shadow-md transition-all cursor-pointer group flex justify-between items-center relative overflow-hidden"
                 >
-                  <div className="flex-grow pr-2">
-                    <h4 className="font-semibold text-slate-800 text-sm group-hover:text-teal-700 transition-colors leading-tight">
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-teal-500 transition-colors"></div>
+                  <div className="flex-grow pr-4">
+                    <h4 className="font-bold text-slate-800 text-sm group-hover:text-teal-700 transition-colors leading-tight mb-1">
                       {course.name.split('(')[0]}
                     </h4>
-                    <p className="text-xs text-slate-400 mt-1 truncate">
-                      {course.summary?.cn || "Click for details"}
+                    <p className="text-xs text-slate-400 truncate font-medium">
+                      {course.summary?.cn || "点击查看详情"}
                     </p>
                   </div>
-                  <div className="ml-2 pl-2 border-l border-slate-100">
-                     <Zap className="w-4 h-4 text-slate-200 group-hover:text-teal-500 fill-current" />
+                  <div className="flex-none">
+                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-teal-50 transition-colors">
+                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-500" />
+                     </div>
                   </div>
                 </div>
               ))}
@@ -984,6 +1022,9 @@ const CourseList = () => {
   );
 };
 
+// -----------------------------------------------------------------------------
+// 每日打卡与模拟面试 (其他Tab页)
+// -----------------------------------------------------------------------------
 const DailyCheckIn = ({ streak, setStreak, lastCheckIn, setLastCheckIn }) => {
   const [reflection, setReflection] = useState("");
   const [isCheckedToday, setIsCheckedToday] = useState(false);
@@ -1002,47 +1043,43 @@ const DailyCheckIn = ({ streak, setStreak, lastCheckIn, setLastCheckIn }) => {
       alert("请至少写下一句今天的思考感悟。");
       return;
     }
-    
     setLoading(true);
     const today = new Date().toDateString();
     setLastCheckIn(today);
     setStreak(prev => prev + 1);
     setIsCheckedToday(true);
-
-    const prompt = `
-      我是一名准备APS面谈的遥感专业学生。
-      我今天的复习感悟是：“${reflection}”。
-      请给我一句简短的、富有哲理的鼓励（中文，50字以内）。
-    `;
-    
+    const prompt = `我是一名准备APS面谈的遥感专业学生。我今天的复习感悟是：“${reflection}”。请给我一句简短的、富有哲理的鼓励（中文，50字以内）。`;
     const response = await callGemini(prompt);
     setAiFeedback(response);
     setLoading(false);
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 relative overflow-hidden">
-      <div className="absolute top-0 right-0 p-3 opacity-5">
-        <Calendar className="w-24 h-24" />
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
+      <div className="absolute top-0 right-0 p-4 opacity-5">
+        <Calendar className="w-32 h-32 text-teal-600" />
       </div>
-      <div className="flex justify-between items-center mb-4 relative z-10">
+      <div className="flex justify-between items-center mb-6 relative z-10">
         <h3 className="text-lg font-bold text-slate-800 flex items-center">
-          <Calendar className="mr-2 text-teal-600 w-5 h-5" /> 每日复盘
+          <Activity className="mr-2 text-teal-600 w-5 h-5" /> 每日复盘
         </h3>
-        <span className="text-xs font-bold bg-teal-50 text-teal-700 px-3 py-1 rounded-full border border-teal-100">
-          Day {streak}
+        <span className="text-xs font-bold bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full border border-teal-100 flex items-center">
+          <Zap className="w-3 h-3 mr-1 fill-current" /> Day {streak}
         </span>
       </div>
 
       {isCheckedToday ? (
-        <div className="text-center py-6 bg-green-50/50 rounded-xl border border-green-100 animate-fade-in relative">
-          <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-2" />
+        <div className="text-center py-8 bg-green-50/50 rounded-xl border border-green-100 animate-in zoom-in duration-300 relative">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+             <CheckCircle className="w-8 h-8 text-green-600" />
+          </div>
           <p className="text-green-800 font-bold text-sm">今日复盘已完成</p>
           {loading ? (
              <div className="mt-4"><LoadingDots /></div>
           ) : aiFeedback ? (
-            <div className="mt-4 mx-2 p-3 bg-white rounded-lg text-slate-600 text-xs italic shadow-sm border border-green-100 text-left">
-              <div className="flex items-center gap-1 mb-1 text-teal-600 font-bold text-[10px] uppercase">
+            <div className="mt-4 mx-4 p-4 bg-white rounded-xl text-slate-600 text-xs italic shadow-sm border border-green-100 text-left relative">
+              <div className="absolute -top-2 left-4 w-4 h-4 bg-white border-t border-l border-green-100 transform rotate-45"></div>
+              <div className="flex items-center gap-1.5 mb-1.5 text-teal-600 font-bold text-[10px] uppercase tracking-wider">
                 <Sparkles className="w-3 h-3" /> AI Mentor
               </div>
               "{aiFeedback}"
@@ -1050,12 +1087,12 @@ const DailyCheckIn = ({ streak, setStreak, lastCheckIn, setLastCheckIn }) => {
           ) : null}
         </div>
       ) : (
-        <div className="space-y-3 relative z-10">
-          <p className="text-slate-500 text-xs">
+        <div className="space-y-4 relative z-10">
+          <p className="text-slate-500 text-xs font-medium">
             今天复习了什么？有什么新的理解？
           </p>
           <textarea
-            className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none text-sm resize-none"
+            className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none text-sm resize-none bg-slate-50 focus:bg-white transition-colors"
             rows="3"
             placeholder="e.g. 终于弄懂了直方图均衡化的数学原理..."
             value={reflection}
@@ -1064,7 +1101,7 @@ const DailyCheckIn = ({ streak, setStreak, lastCheckIn, setLastCheckIn }) => {
           <button
             onClick={handleCheckIn}
             disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-xl transition-all shadow-md shadow-teal-200 flex justify-center items-center text-sm"
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-xl transition-all shadow-md shadow-teal-200 flex justify-center items-center text-sm active:scale-95"
           >
             {loading ? <LoadingDots /> : "提交打卡"}
           </button>
@@ -1084,36 +1121,39 @@ const InterviewSim = () => {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col h-full relative overflow-hidden">
-       <div className="absolute -right-10 -top-10 bg-purple-50 w-32 h-32 rounded-full z-0"></div>
-      <div className="flex justify-between items-center mb-6 relative z-10">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col h-full relative overflow-hidden">
+       <div className="absolute -right-12 -top-12 bg-purple-50 w-40 h-40 rounded-full z-0"></div>
+      <div className="flex justify-between items-center mb-8 relative z-10">
          <h3 className="font-bold text-slate-800 text-lg flex items-center"><RefreshCw className="w-5 h-5 mr-2 text-purple-600"/> 快速问答 (Q&A)</h3>
-         <span className="text-xs font-mono bg-purple-50 text-purple-700 px-2 py-1 rounded border border-purple-100">Q-{qIndex + 1}</span>
+         <span className="text-xs font-mono font-bold bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100">Q-{qIndex + 1}</span>
       </div>
       
-      <div className="flex-grow relative z-10">
-        <h4 className="text-lg font-bold text-slate-800 mb-3 leading-snug">{QUESTIONS[qIndex].q}</h4>
-        <p className="text-xs text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full inline-block border border-amber-100 mb-6">
-          💡 Hint: {QUESTIONS[qIndex].hint}
-        </p>
+      <div className="flex-grow relative z-10 flex flex-col justify-center">
+        <h4 className="text-xl font-bold text-slate-800 mb-4 leading-snug">{QUESTIONS[qIndex].q}</h4>
+        <div className="mb-6">
+           <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100 uppercase tracking-wide">
+             💡 Hint: {QUESTIONS[qIndex].hint}
+           </span>
+        </div>
         
         {showAns ? (
-          <div className="bg-slate-50 p-4 rounded-xl text-sm text-slate-700 border-l-4 border-purple-500 animate-fade-in shadow-sm">
-            <span className="font-bold block mb-1 text-purple-700">Answer:</span>
+          <div className="bg-slate-50 p-5 rounded-2xl text-sm text-slate-700 border-l-4 border-purple-500 animate-in fade-in slide-in-from-bottom-2 shadow-sm">
+            <span className="font-bold block mb-2 text-purple-700 uppercase text-xs tracking-wider">Reference Answer</span>
             {QUESTIONS[qIndex].a}
           </div>
         ) : (
-          <div className="h-24 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-400 text-xs">
-            Try to speak it out loud first...
+          <div className="h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+            <p className="mb-2">Try to speak it out loud first...</p>
+            <div className="w-8 h-1 bg-slate-200 rounded-full"></div>
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mt-8 relative z-10">
-        <button onClick={() => setShowAns(!showAns)} className="py-2.5 border border-slate-300 rounded-xl hover:bg-slate-50 text-sm font-medium text-slate-600 transition-colors">
+      <div className="grid grid-cols-2 gap-4 mt-8 relative z-10">
+        <button onClick={() => setShowAns(!showAns)} className="py-3 border border-slate-300 rounded-xl hover:bg-slate-50 text-sm font-bold text-slate-600 transition-colors">
           {showAns ? "隐藏答案" : "查看答案"}
         </button>
-        <button onClick={() => {setQIndex((qIndex+1)%QUESTIONS.length); setShowAns(false);}} className="py-2.5 bg-slate-800 text-white rounded-xl hover:bg-slate-900 text-sm font-medium shadow-lg shadow-slate-200 transition-all active:scale-95">
+        <button onClick={() => {setQIndex((qIndex+1)%QUESTIONS.length); setShowAns(false);}} className="py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 text-sm font-bold shadow-lg shadow-slate-200 transition-all active:scale-95">
           下一题
         </button>
       </div>
@@ -1121,6 +1161,9 @@ const InterviewSim = () => {
   );
 };
 
+// -----------------------------------------------------------------------------
+// App 入口
+// -----------------------------------------------------------------------------
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [streak, setStreak] = useState(0);
@@ -1134,34 +1177,35 @@ export default function App() {
     switch(activeTab) {
       case 'dashboard':
         return (
-          <div className="space-y-6 animate-fade-in pb-24">
-            <div className="bg-gradient-to-r from-teal-700 to-emerald-600 rounded-2xl p-6 text-white shadow-xl shadow-teal-100 relative overflow-hidden">
+          <div className="space-y-6 animate-in fade-in pb-24">
+            {/* Header Card */}
+            <div className="bg-gradient-to-r from-teal-700 to-emerald-600 rounded-3xl p-6 text-white shadow-xl shadow-teal-100 relative overflow-hidden">
               <div className="relative z-10">
-                <h1 className="text-2xl font-bold mb-2">Ready for APS?</h1>
-                <p className="text-teal-50 text-sm mb-4 opacity-90 italic leading-relaxed">"{quote}"</p>
-                <div className="flex items-center text-xs font-mono bg-black/20 backdrop-blur-sm w-fit px-3 py-1 rounded-full border border-white/10">
-                  <GraduationCap className="w-3 h-3 mr-2" /> CUG {'->'} Germany
+                <h1 className="text-3xl font-bold mb-2">Ready for APS?</h1>
+                <p className="text-teal-50 text-sm mb-5 opacity-90 italic leading-relaxed font-medium">"{quote}"</p>
+                <div className="flex items-center text-xs font-mono font-bold bg-black/20 backdrop-blur-sm w-fit px-4 py-1.5 rounded-full border border-white/10">
+                  <GraduationCap className="w-3.5 h-3.5 mr-2" /> CUG {'->'} Germany
                 </div>
               </div>
-              <Layers className="absolute -right-6 -bottom-6 w-36 h-36 text-white/10 rotate-12" />
+              <Layers className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12" />
             </div>
 
             <DailyCheckIn streak={streak} setStreak={setStreak} lastCheckIn={lastCheckIn} setLastCheckIn={setLastCheckIn} />
 
             <div className="grid grid-cols-2 gap-4">
-              <div onClick={() => setActiveTab('courses')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group">
-                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-blue-100 transition-colors">
-                  <BookOpen className="w-5 h-5 text-blue-600" />
+              <div onClick={() => setActiveTab('courses')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group active:scale-95">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors text-blue-600">
+                  <BookOpen className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-slate-700">核心课程栈</h3>
-                <p className="text-xs text-slate-400 mt-1">Bilingual + Logic Map</p>
+                <h3 className="font-bold text-slate-700 text-lg">核心课程栈</h3>
+                <p className="text-xs text-slate-400 mt-1 font-medium">Bilingual + Logic Map</p>
               </div>
-              <div onClick={() => setActiveTab('interview')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all group">
-                 <div className="w-10 h-10 bg-purple-50 rounded-full flex items-center justify-center mb-3 group-hover:bg-purple-100 transition-colors">
-                  <RefreshCw className="w-5 h-5 text-purple-600" />
+              <div onClick={() => setActiveTab('interview')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all group active:scale-95">
+                 <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors text-purple-600">
+                  <RefreshCw className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-slate-700">模拟面谈</h3>
-                <p className="text-xs text-slate-400 mt-1">AI 考官实时对练</p>
+                <h3 className="font-bold text-slate-700 text-lg">模拟面谈</h3>
+                <p className="text-xs text-slate-400 mt-1 font-medium">AI 考官实时对练</p>
               </div>
             </div>
           </div>
@@ -1173,44 +1217,56 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col relative">
-      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 sticky top-0 z-30 flex justify-between items-center">
-        <div className="flex items-center space-x-2" onClick={() => setActiveTab('dashboard')}>
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm cursor-pointer">RS</div>
-          <span className="font-bold text-slate-800 cursor-pointer">Logic Prep</span>
+    <div className="h-[100dvh] w-full bg-slate-50 font-sans text-slate-900 max-w-md mx-auto shadow-2xl flex flex-col relative overflow-hidden">
+      {/* Top Bar */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex-none z-30 flex justify-between items-center">
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab('dashboard')}>
+          <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">RS</div>
+          <span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span>
         </div>
-        <button onClick={() => setShowInstallGuide(true)} className="p-2 text-slate-400 hover:text-teal-600 rounded-full hover:bg-slate-50 transition-colors">
+        <button onClick={() => setShowInstallGuide(true)} className="p-2.5 text-slate-400 hover:text-teal-600 hover:bg-slate-50 rounded-full transition-all">
           <Smartphone className="w-5 h-5" />
         </button>
       </header>
 
-      <main className="flex-grow p-6 overflow-y-auto scrollbar-hide">{renderContent()}</main>
+      {/* Main Content (Scrollable) */}
+      <main className="flex-1 overflow-y-auto scrollbar-hide p-6 pb-24">
+        {renderContent()}
+      </main>
 
-      <nav className="absolute bottom-0 w-full bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-30 pb-6 sm:pb-3">
-        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'dashboard' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}>
-          <Layers className="w-6 h-6" /> <span className="text-[10px] font-medium">概览</span>
+      {/* Bottom Nav (Fixed) */}
+      <nav className="bg-white border-t border-slate-200 px-6 py-3 flex-none flex justify-between items-center z-30 pb-safe sm:pb-3">
+        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center space-y-1.5 transition-all w-16 ${activeTab === 'dashboard' ? 'text-teal-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+          <Layers className="w-6 h-6" /> <span className="text-[10px] font-bold">概览</span>
         </button>
-        <button onClick={() => setActiveTab('courses')} className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'courses' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}>
-          <BookOpen className="w-6 h-6" /> <span className="text-[10px] font-medium">课程</span>
+        <button onClick={() => setActiveTab('courses')} className={`flex flex-col items-center space-y-1.5 transition-all w-16 ${activeTab === 'courses' ? 'text-teal-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+          <BookOpen className="w-6 h-6" /> <span className="text-[10px] font-bold">课程</span>
         </button>
-        <button onClick={() => setActiveTab('interview')} className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'interview' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}>
-          <Award className="w-6 h-6" /> <span className="text-[10px] font-medium">实战</span>
+        <button onClick={() => setActiveTab('interview')} className={`flex flex-col items-center space-y-1.5 transition-all w-16 ${activeTab === 'interview' ? 'text-teal-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}>
+          <Award className="w-6 h-6" /> <span className="text-[10px] font-bold">实战</span>
         </button>
       </nav>
 
+      {/* Install Guide Modal */}
       {showInstallGuide && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in">
-           <div className="bg-white p-6 rounded-2xl max-w-sm w-full relative shadow-2xl">
-             <button onClick={() => setShowInstallGuide(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
-             <h3 className="font-bold mb-4 text-lg">安装到手机</h3>
-             <div className="space-y-4 text-sm text-slate-600">
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm animate-in fade-in">
+           <div className="bg-white p-6 rounded-3xl max-w-sm w-full relative shadow-2xl">
+             <button onClick={() => setShowInstallGuide(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1"><X className="w-5 h-5" /></button>
+             <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                <Smartphone className="w-6 h-6 text-slate-600" />
+             </div>
+             <h3 className="font-bold text-xl mb-2 text-slate-800">安装到手机</h3>
+             <p className="text-slate-500 text-sm mb-6 leading-relaxed">
+               为了获得最佳的全屏体验，请将此应用添加到主屏幕。
+             </p>
+             <div className="space-y-4 text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100">
                <div className="flex items-start gap-3">
-                 <div className="bg-slate-100 p-2 rounded-lg"><Smartphone className="w-5 h-5"/></div>
-                 <p>在浏览器点击底部的 <strong>"分享"</strong> 按钮。</p>
+                 <div className="bg-white p-1.5 rounded-md shadow-sm border border-slate-200 text-blue-500"><ShareIcon /></div>
+                 <p className="pt-0.5">点击浏览器底部的 <strong>"分享"</strong> 按钮。</p>
                </div>
                <div className="flex items-start gap-3">
-                 <div className="bg-slate-100 p-2 rounded-lg"><CheckCircle className="w-5 h-5"/></div>
-                 <p>选择 <strong>"添加到主屏幕" (Add to Home Screen)</strong> 即可全屏离线使用。</p>
+                 <div className="bg-white p-1.5 rounded-md shadow-sm border border-slate-200 text-slate-600"><Plus className="w-4 h-4"/></div>
+                 <p className="pt-0.5">选择 <strong>"添加到主屏幕"</strong> 即可。</p>
                </div>
              </div>
            </div>
@@ -1219,3 +1275,10 @@ export default function App() {
     </div>
   );
 }
+
+// Icon Helper
+const ShareIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+  </svg>
+);
