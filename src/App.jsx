@@ -12,7 +12,7 @@ import {QUOTES , COURSE_DATA} from './data';
 // ============================================================================
 // 1. 全局配置与 API
 // ============================================================================
-const apiKey = ""; // 🔴 请在此处填入您的 API Key
+const apiKey = "AIzaSyCADS6fXhqZ_kO_C1TRcx23dijzmbzmPVE"; // 🔴 请在此处填入您的 API Key
 
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
 const KATEX_JS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
