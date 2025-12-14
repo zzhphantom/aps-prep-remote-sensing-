@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  BookOpen, CheckCircle, Brain, Target, Calendar, ChevronDown, 
+  BookOpen, CheckCircle, Brain, Target, Calendar, ChevronDown, ChevronUp,
   ChevronRight, Award, RefreshCw, Layers, Sparkles, X, 
   Smartphone, GraduationCap, FileText, Globe, Network, 
-  Languages, Zap, Database, Camera, AlertCircle, 
-  Plus, Minus, Maximize, Move, Code, Activity, Map, Layout,
-  MessageSquare, Menu, Monitor
+  Languages, Zap, Activity, Plus, MessageSquare, StickyNote, 
+  Save, Trash2, ChevronLeft, CalendarDays, Check, Maximize2
 } from 'lucide-react';
 
-import {COURSE_DATA,QUOTES} from './data';
+import {QUOTES,COURSE_DATA} from './data';
 
 // ============================================================================
-// 1. 全局配置与数据
+// 1. 全局配置与 API
 // ============================================================================
-const apiKey = "AIzaSyCqEmWWUuTuBpOo2JaWZcXIOOnI4k3QOVU"; 
+const apiKey = "AIzaSyCADS6fXhqZ_kO_C1TRcx23dijzmbzmPVE"; 
 
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
 const KATEX_JS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
@@ -625,16 +624,10 @@ const KatexMath = ({ tex, block = false }) => {
     if (katexLoaded && containerRef.current && window.katex) {
       try { 
         window.katex.render(tex, containerRef.current, { 
-          displayMode: block, 
-          throwOnError: false,
-          strict: false 
+          displayMode: block, throwOnError: false, strict: false 
         }); 
-      } catch (e) { 
-        containerRef.current.innerText = tex; 
-      }
-    } else if (containerRef.current) { 
-      containerRef.current.innerText = tex; 
-    }
+      } catch (e) { containerRef.current.innerText = tex; }
+    } else if (containerRef.current) { containerRef.current.innerText = tex; }
   }, [tex, block, katexLoaded]);
   return <span ref={containerRef} className={block ? "block my-2 text-center overflow-x-auto scrollbar-hide" : "inline-block px-0.5"} />;
 };
@@ -667,19 +660,15 @@ const MarkdownRenderer = ({ content }) => {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const trimmed = line.trim();
-
     const isMathStart = trimmed.startsWith('$$') || trimmed.startsWith('\\[');
     const isMathEnd = trimmed.endsWith('$$') || trimmed.endsWith('\\]');
 
     if (inMathBlock) {
       if (isMathEnd) {
-        let cleanLine = trimmed;
-        if (cleanLine.endsWith('$$')) cleanLine = cleanLine.slice(0, -2);
-        else if (cleanLine.endsWith('\\]')) cleanLine = cleanLine.slice(0, -2);
+        let cleanLine = trimmed.replace(/\$\$|\\\]/g, '');
         if (cleanLine) mathBuffer.push(cleanLine);
         blocks.push({ type: 'math', content: mathBuffer.join(' ') }); 
-        inMathBlock = false;
-        mathBuffer = [];
+        inMathBlock = false; mathBuffer = [];
       } else { mathBuffer.push(line); }
       continue;
     }
@@ -687,16 +676,12 @@ const MarkdownRenderer = ({ content }) => {
     if (isMathStart) {
       if (currentBlock) { blocks.push(currentBlock); currentBlock = null; }
       if (isMathEnd && trimmed.length > 2) {
-        let math = trimmed;
-        if (math.startsWith('$$')) math = math.slice(2); else if (math.startsWith('\\[')) math = math.slice(2);
-        if (math.endsWith('$$')) math = math.slice(0, -2); else if (math.endsWith('\\]')) math = math.slice(0, -2);
+        let math = trimmed.replace(/^\$\$|^\\\[|\\\]$|\$\$$/g, '');
         blocks.push({ type: 'math', content: math });
         continue;
       }
       inMathBlock = true;
-      let cleanLine = trimmed;
-      if (cleanLine.startsWith('$$')) cleanLine = cleanLine.slice(2);
-      else if (cleanLine.startsWith('\\[')) cleanLine = cleanLine.slice(2);
+      let cleanLine = trimmed.replace(/^\$\$|^\\\[/, '');
       if (cleanLine) mathBuffer.push(cleanLine);
       continue;
     }
@@ -713,8 +698,7 @@ const MarkdownRenderer = ({ content }) => {
     }
     if (/^#{1,6}\s/.test(trimmed)) {
       if (currentBlock) blocks.push(currentBlock);
-      const level = trimmed.match(/^#+/)[0].length;
-      blocks.push({ type: 'heading', level, content: trimmed.replace(/^#+\s/, '') });
+      blocks.push({ type: 'heading', level: trimmed.match(/^#+/)[0].length, content: trimmed.replace(/^#+\s/, '') });
       continue;
     }
     if (/^([一二三四五六七八九十]+|[0-9]+)、/.test(trimmed)) {
@@ -729,14 +713,14 @@ const MarkdownRenderer = ({ content }) => {
     else { if (currentBlock) blocks.push(currentBlock); currentBlock = { type: 'text', lines: [line] }; }
   }
   if (currentBlock) blocks.push(currentBlock);
-  if (inMathBlock && mathBuffer.length > 0) blocks.push({ type: 'math', content: mathBuffer.join(' ') });
+  if (inMathBlock) blocks.push({ type: 'math', content: mathBuffer.join(' ') });
 
   return (
     <div className="space-y-4 text-sm leading-relaxed text-slate-700">
       {blocks.map((block, idx) => {
         if (block.type === 'math') return <div key={idx} className="my-4 p-3 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto shadow-sm text-center"><KatexMath tex={block.content} block={true} /></div>;
         if (block.type === 'heading') {
-          const styles = block.level === 1 ? "font-bold text-xl text-slate-900 border-b border-slate-200 pb-2 mb-3 mt-6" : block.level === 2 ? "font-bold text-lg text-teal-800 mt-5 mb-2" : "font-bold text-base text-slate-800 mt-4 mb-1";
+          const styles = block.level === 1 ? "font-bold text-xl text-slate-900 border-b border-slate-200 pb-2 mb-3 mt-6" : block.level === 2 ? "font-bold text-lg text-teal-800 mt-5 mb-2 border-b border-slate-100 pb-1" : "font-bold text-base text-slate-800 mt-4 mb-1";
           return <div key={idx} className={styles}><InlineRenderer text={block.content} /></div>;
         }
         if (block.type === 'cn-heading') return <div key={idx} className="font-bold text-indigo-700 mt-5 mb-2 text-base bg-indigo-50/50 p-2 rounded-lg border-l-4 border-indigo-400"><InlineRenderer text={block.content} /></div>;
@@ -784,8 +768,6 @@ const BiText = ({ cn, en, label }) => {
           <Languages className="w-3.5 h-3.5" />
         </button>
       )}
-      
-      {/* 核心修复：防止术语卡片右侧按钮遮挡 */}
       <div className={`transition-opacity duration-300 ${!label ? 'pr-9' : ''}`}>{lang === 'cn' ? cn : en}</div>
     </div>
   );
@@ -801,7 +783,11 @@ const LogicNode = ({ node, level = 0, isLast = false, lang = 'cn' }) => {
 
   const label = node.label ? (node.label[localLang] || node.label.cn) : "Node";
   const desc = node.desc ? (node.desc[localLang] || node.desc.cn) : "";
-  const toggleLocalLang = (e) => { e.stopPropagation(); setLocalLang(prev => prev === 'cn' ? 'en' : 'cn'); };
+
+  const toggleLocalLang = (e) => {
+    e.stopPropagation();
+    setLocalLang(prev => prev === 'cn' ? 'en' : 'cn');
+  };
 
   return (
     <div className="relative pl-3"> 
@@ -851,94 +837,152 @@ const LogicTreeContainer = ({ data }) => {
 };
 
 // ============================================================================
-// 5. 页面主逻辑 (Responsive & Layout Fixes)
+// 5. 新增：打卡日历组件
 // ============================================================================
 
-const CourseModal = ({ course, onClose }) => {
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
-  const [loading, setLoading] = useState(false);
+const MOCK_HISTORY = {
+  "Sun Oct 01 2023": "复习了电磁波谱，重点记忆了可见光和近红外波段范围。",
+  "Tue Oct 03 2023": "学习了大气窗口，明白了为什么某些波段无法观测。",
+  "Thu Oct 05 2023": "深入理解了瑞利散射和米氏散射的区别，蓝色天空原理解析。",
+  "Tue Oct 10 2023": "今日复盘：几何校正的GCP选取原则，分布要均匀。",
+  "Thu Oct 12 2023": "攻克了NDVI公式，(NIR-R)/(NIR+R)，范围-1到1。",
+};
 
-  const handleAiAsk = async () => {
-    if (!aiQuery.trim()) return;
-    setLoading(true);
-    const res = await callGemini(`背景：APS审核。课程：${course.name}。问题：${aiQuery}。请用中文回答，术语附带英文，公式用$$格式(独立行)，表格用Markdown格式。`);
-    setAiResponse(res);
-    setLoading(false);
+const CalendarModal = ({ history, onClose }) => {
+  const today = new Date();
+  const [currentDate, setCurrentDate] = useState(today);
+  const [selectedDateLog, setSelectedDateLog] = useState(null);
+
+  const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  const getFirstDayOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+
+  const daysInMonth = getDaysInMonth(currentDate);
+  const firstDay = getFirstDayOfMonth(currentDate);
+  
+  const days = [];
+  for (let i = 0; i < firstDay; i++) days.push(null);
+  for (let i = 1; i <= daysInMonth; i++) days.push(i);
+
+  const handleDayClick = (day) => {
+    if (!day) return;
+    const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
+    setSelectedDateLog({ date: dateStr, content: history[dateStr] || "暂无打卡记录" });
   };
 
-  if (!course) return null;
+  const changeMonth = (offset) => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + offset, 1));
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center sm:p-4 animate-in fade-in backdrop-blur-sm">
-      <div className="bg-white w-full h-[90vh] sm:h-auto sm:max-h-[85vh] sm:max-w-2xl sm:rounded-2xl rounded-t-3xl flex flex-col shadow-2xl overflow-hidden">
-        
-        {/* 固定头部 */}
-        <div className="flex-none p-5 border-b border-slate-100 flex justify-between items-start bg-white z-20">
-          <div className="flex-1 mr-4 min-w-0"> 
-            <h3 className="font-bold text-lg text-slate-800 leading-snug break-words pr-2">{course.name}</h3> 
-            <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded mt-1.5 inline-block">
-              APS CORE
-            </span>
-          </div>
-          <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-500 flex-shrink-0">
-            <X className="w-5 h-5" />
-          </button>
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
+      <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <div className="p-4 bg-teal-600 text-white flex justify-between items-center">
+          <h3 className="font-bold flex items-center gap-2"><CalendarDays className="w-5 h-5"/> 学习日历</h3>
+          <button onClick={onClose}><X className="w-5 h-5"/></button>
         </div>
+        
+        <div className="p-4 flex-1 overflow-y-auto">
+          <div className="flex justify-between items-center mb-4">
+            <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-slate-100 rounded"><ChevronLeft className="w-5 h-5 text-slate-500"/></button>
+            <span className="font-bold text-slate-700">{currentDate.getFullYear()}年 {currentDate.getMonth() + 1}月</span>
+            <button onClick={() => changeMonth(1)} className="p-1 hover:bg-slate-100 rounded"><ChevronRight className="w-5 h-5 text-slate-500"/></button>
+          </div>
 
-        {/* 滚动内容区 */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-8 pb-24 sm:pb-5">
-          <BiText label={<><FileText className="w-4 h-4 mr-2" /> 概要 (Summary)</>} cn={<div className="bg-blue-50 text-blue-900 p-4 rounded-xl text-sm leading-relaxed border border-blue-100 shadow-sm">{course.summary.cn}</div>} en={<div className="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100 shadow-sm font-medium">{course.summary.en}</div>} />
-          <BiText label={<><Target className="w-4 h-4 mr-2" /> 目标 (Goals)</>} cn={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-teal-400 py-1">{course.goals.cn}</p>} en={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-indigo-400 py-1 font-medium">{course.goals.en}</p>} />
-          
-          <LogicTreeContainer data={course.logicTree} />
+          <div className="grid grid-cols-7 gap-2 text-center text-sm mb-4">
+            {['日','一','二','三','四','五','六'].map(d => <div key={d} className="text-slate-400 text-xs font-bold">{d}</div>)}
+            {days.map((day, i) => {
+              if (!day) return <div key={i}></div>;
+              const dateStr = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toDateString();
+              const isChecked = !!history[dateStr];
+              const isToday = dateStr === today.toDateString();
+              
+              return (
+                <div 
+                  key={i} 
+                  onClick={() => handleDayClick(day)}
+                  className={`
+                    aspect-square flex items-center justify-center rounded-lg cursor-pointer transition-all relative
+                    ${isToday ? 'border-2 border-teal-500 text-teal-600 font-bold' : ''}
+                    ${isChecked ? 'bg-teal-100 text-teal-800 font-bold' : 'hover:bg-slate-100 text-slate-600'}
+                  `}
+                >
+                  {day}
+                  {isChecked && <div className="absolute bottom-1 w-1 h-1 bg-teal-500 rounded-full"></div>}
+                </div>
+              );
+            })}
+          </div>
 
-          {course.terms && course.terms.length > 0 && (
-            <div>
-              <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
-                <Globe className="w-4 h-4 mr-2" /> 核心术语库 (Terminology)
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {course.terms.map((term, idx) => (
-                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-teal-400 transition-all group relative">
-                    <div className="flex justify-between items-start mb-2 pr-8">
-                      <h5 className="font-bold text-teal-700 text-base break-words">{term.en}</h5>
-                    </div>
-                    <BiText 
-                      cn={<div className="text-xs text-slate-500 leading-relaxed border-t border-slate-100 pt-2"><span className="font-bold mr-1">{term.cn}</span>: {term.desc_cn}</div>}
-                      en={<div className="text-xs text-slate-600 leading-relaxed border-t border-slate-100 pt-2 font-medium"><span className="font-bold mr-1">{term.cn}</span>: {term.desc_en}</div>}
-                    />
-                  </div>
-                ))}
+          {selectedDateLog && (
+            <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-100 animate-in slide-in-from-bottom-2">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-2 h-2 rounded-full bg-teal-500"></div>
+                <span className="text-xs font-bold text-slate-500">{selectedDateLog.date}</span>
               </div>
+              <p className="text-sm text-slate-700 leading-relaxed">{selectedDateLog.content}</p>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
-          <div className="bg-gradient-to-br from-purple-50 to-white rounded-xl p-5 border border-purple-100 shadow-sm">
-            <h4 className="flex items-center text-sm font-bold text-purple-700 uppercase tracking-wider mb-3">
-              <Sparkles className="w-4 h-4 mr-2" /> AI 深度追问
-            </h4>
-            <div className="flex gap-2 mb-4">
-              <input 
-                type="text" 
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-                placeholder="例如：为什么SAR会有阴影？"
-                className="flex-grow text-sm p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white shadow-inner"
-              />
-              <button 
-                onClick={handleAiAsk}
-                disabled={loading}
-                className="bg-purple-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md shadow-purple-200 flex-shrink-0"
-              >
-                {loading ? "..." : "Ask"}
-              </button>
-            </div>
-            {aiResponse && (
-              <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm animate-in fade-in">
-                <MarkdownRenderer content={aiResponse} />
-              </div>
-            )}
+// ============================================================================
+// 6. 页面组件 (NoteCard, NoteReader, CourseModal, etc.)
+// ============================================================================
+
+const Toast = ({ message, onClose }) => {
+  useEffect(() => { const timer = setTimeout(onClose, 2000); return () => clearTimeout(timer); }, [onClose]);
+  return (
+    <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900/90 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 z-[100] animate-in fade-in slide-in-from-top-4 backdrop-blur-sm">
+      <CheckCircle className="w-5 h-5 text-teal-400" /><span className="text-sm font-medium">{message}</span>
+    </div>
+  );
+};
+
+const NoteCard = ({ note, onDelete, onView }) => {
+  return (
+    <div 
+      onClick={() => onView(note)}
+      className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 text-sm text-slate-700 shadow-sm relative group cursor-pointer hover:border-yellow-300 transition-all hover:shadow-md active:scale-[0.98]"
+    >
+      <div className="flex justify-between items-start mb-2">
+        <div className="font-bold text-yellow-800 text-xs bg-yellow-100 px-2 py-0.5 rounded flex items-center gap-1">
+          <Calendar className="w-3 h-3" /> {note.date}
+        </div>
+        <button 
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            onDelete(note.id); // 直接调用闭包函数
+          }} 
+          className="text-yellow-600 hover:text-red-500 p-1.5 -mr-1.5 -mt-1.5 rounded-full hover:bg-yellow-100 transition-all z-10"
+          title="删除笔记"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="font-bold text-slate-800 mb-1 leading-snug line-clamp-1">Q: {note.question}</div>
+      <div className="text-slate-500 text-xs opacity-80 line-clamp-2">{(note.answer || '').replace(/[#*`]/g, '')}</div>
+    </div>
+  );
+};
+
+const NoteReaderModal = ({ note, onClose }) => {
+  if (!note) return null;
+  return (
+    <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
+      <div className="bg-white w-full max-w-lg h-[80vh] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-yellow-50/80 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-yellow-800 font-bold">
+            <StickyNote className="w-5 h-5" /> 学习笔记详情
+          </div>
+          <button onClick={onClose} className="p-1 rounded-full hover:bg-yellow-100 transition-colors"><X className="w-5 h-5 text-slate-400 hover:text-slate-600"/></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 pb-20">
+          <div className="font-bold text-lg text-slate-900 mb-4 border-l-4 border-yellow-400 pl-3 leading-snug">{note.question}</div>
+          <div className="prose prose-sm max-w-none text-slate-600">
+            <MarkdownRenderer content={note.answer} />
           </div>
         </div>
       </div>
@@ -946,44 +990,119 @@ const CourseModal = ({ course, onClose }) => {
   );
 };
 
-const CourseList = ({ setSelectedCourse }) => {
+const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote }) => {
+  const [aiQuery, setAiQuery] = useState("");
+  const [aiResponse, setAiResponse] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false); 
+  const [viewingNote, setViewingNote] = useState(null);
+
+  const handleAiAsk = async () => {
+    if (!aiQuery.trim()) return;
+    setLoading(true);
+    setIsSaved(false); 
+    const res = await callGemini(`背景：APS审核。课程：${course.name}。问题：${aiQuery}。请用中文回答，术语附带英文，公式用$$格式(独立行)，表格用Markdown格式。`);
+    setAiResponse(res);
+    setLoading(false);
+  };
+
+  const handleSave = () => {
+    onSaveNote(course.id, aiQuery, aiResponse);
+    setIsSaved(true); 
+  };
+
+  if (!course) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
+      <div className="bg-white w-full h-[90vh] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl rounded-2xl flex flex-col shadow-2xl overflow-hidden min-w-0">
+        <div className="flex-none p-5 border-b border-slate-100 flex justify-between items-start bg-white z-20">
+          <div className="flex-1 mr-4 min-w-0"> 
+            <h3 className="font-bold text-lg text-slate-800 leading-snug break-words pr-2">{course.name}</h3> 
+            <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded mt-1.5 inline-block">APS CORE</span>
+          </div>
+          <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-500 flex-shrink-0"><X className="w-5 h-5" /></button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-5 space-y-8 pb-24 sm:pb-5">
+          <BiText label={<><FileText className="w-4 h-4 mr-2" /> 概要 (Summary)</>} cn={<div className="bg-blue-50 text-blue-900 p-4 rounded-xl text-sm leading-relaxed border border-blue-100 shadow-sm">{course.summary.cn}</div>} en={<div className="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100 shadow-sm font-medium">{course.summary.en}</div>} />
+          <BiText label={<><Target className="w-4 h-4 mr-2" /> 目标 (Goals)</>} cn={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-teal-400 py-1">{course.goals.cn}</p>} en={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-indigo-400 py-1 font-medium">{course.goals.en}</p>} />
+          <LogicTreeContainer data={course.logicTree} />
+          
+          {course.terms && (
+            <div>
+              <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-4"><Globe className="w-4 h-4 mr-2" /> 核心术语库</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {course.terms.map((term, idx) => (
+                  <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative">
+                    <h5 className="font-bold text-teal-700 text-base mb-2 break-words mr-8">{term.en}</h5>
+                    <BiText cn={<div className="text-xs text-slate-500 pt-2 border-t border-slate-100"><span className="font-bold">{term.cn}</span>: {term.desc_cn}</div>} en={<div className="text-xs text-slate-600 pt-2 border-t border-slate-100 font-medium"><span className="font-bold">{term.cn}</span>: {term.desc_en}</div>} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {course.notes && course.notes.length > 0 && (
+            <div>
+              <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-4"><StickyNote className="w-4 h-4 mr-2" /> 学习笔记 ({course.notes.length})</h4>
+              <div className="grid grid-cols-1 gap-3">
+                {course.notes.map((note) => (
+                  <NoteCard 
+                    key={note.id} 
+                    note={note} 
+                    onDelete={(noteId) => onDeleteNote(course.id, noteId)} // 关键修复：确保传递 course.id
+                    onView={setViewingNote} 
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="bg-gradient-to-br from-purple-50 to-white rounded-xl p-5 border border-purple-100 shadow-sm">
+            <h4 className="flex items-center text-sm font-bold text-purple-700 uppercase tracking-wider mb-3"><Sparkles className="w-4 h-4 mr-2" /> AI 深度追问</h4>
+            <div className="flex gap-2 mb-4">
+              <input type="text" value={aiQuery} onChange={(e) => {setAiQuery(e.target.value); setIsSaved(false);}} placeholder="例如：为什么SAR会有阴影？" className="flex-grow text-sm p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white shadow-inner" />
+              <button onClick={handleAiAsk} disabled={loading} className="bg-purple-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md shadow-purple-200 flex-shrink-0">{loading ? "..." : "Ask"}</button>
+            </div>
+            {aiResponse && (
+              <div className="bg-white p-4 rounded-xl border border-purple-100 shadow-sm animate-in fade-in relative">
+                <MarkdownRenderer content={aiResponse} />
+                <button 
+                  onClick={handleSave} 
+                  disabled={isSaved}
+                  className={`mt-4 flex items-center justify-center w-full py-2.5 rounded-lg text-xs font-bold transition-all ${isSaved ? 'bg-green-100 text-green-700 cursor-default' : 'bg-purple-100 hover:bg-purple-200 text-purple-700 active:scale-95'}`}
+                >
+                  {isSaved ? <><Check className="w-4 h-4 mr-1.5" /> 已保存</> : <><Save className="w-4 h-4 mr-1.5" /> 保存到笔记</>}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {viewingNote && <NoteReaderModal note={viewingNote} onClose={() => setViewingNote(null)} />}
+    </div>
+  );
+};
+
+const CourseList = ({ courses, setSelectedCourse }) => {
   const [expandedCat, setExpandedCat] = useState("理论基础 (Fundamentals)");
   return (
     <div className="space-y-4">
-      {COURSE_DATA.map((cat, idx) => (
+      {courses.map((cat, idx) => (
         <div key={idx} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <button
-            onClick={() => setExpandedCat(expandedCat === cat.category ? null : cat.category)}
-            className={`w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-colors font-bold text-sm text-slate-700 ${expandedCat === cat.category ? 'border-b border-slate-100' : ''}`}
-          >
-            <span className="flex items-center">
-              <span className={`w-1.5 h-4 rounded-full mr-2 ${expandedCat === cat.category ? 'bg-teal-500' : 'bg-slate-300'}`}></span>
-              {cat.category}
-            </span>
+          <button onClick={() => setExpandedCat(expandedCat === cat.category ? null : cat.category)} className={`w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition-colors font-bold text-sm text-slate-700 ${expandedCat === cat.category ? 'border-b border-slate-100' : ''}`}>
+            <span className="flex items-center"><span className={`w-1.5 h-4 rounded-full mr-2 ${expandedCat === cat.category ? 'bg-teal-500' : 'bg-slate-300'}`}></span>{cat.category}</span>
             {expandedCat === cat.category ? <ChevronDown className="w-4 h-4 text-slate-400" /> : <ChevronRight className="w-4 h-4 text-slate-400" />}
           </button>
-          
           {expandedCat === cat.category && (
-            <div className="p-3 flex flex-col gap-3 bg-slate-50/30">
+            <div className="p-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 bg-slate-50/30">
               {cat.courses.map((course) => (
-                <div 
-                  key={course.id}
-                  onClick={() => setSelectedCourse(course)}
-                  className="p-4 bg-white border border-slate-100 rounded-xl hover:border-teal-400 hover:shadow-md transition-all cursor-pointer group flex justify-between items-center active:scale-[0.98]"
-                >
+                <div key={course.id} onClick={() => setSelectedCourse(course)} className="p-4 bg-white border border-slate-100 rounded-xl hover:border-teal-400 hover:shadow-md transition-all cursor-pointer group flex justify-between items-center active:scale-[0.98]">
                   <div className="flex-1 pr-3 min-w-0"> 
-                    <h4 className="font-bold text-slate-800 text-sm group-hover:text-teal-700 transition-colors leading-tight mb-1 truncate">
-                      {course.name.split('(')[0]}
-                    </h4>
-                    <p className="text-xs text-slate-400 truncate font-medium">
-                      {course.summary?.cn || "点击查看详情"}
-                    </p>
+                    <h4 className="font-bold text-slate-800 text-sm group-hover:text-teal-700 transition-colors leading-tight mb-1 truncate">{course.name.split('(')[0]}</h4>
+                    <p className="text-xs text-slate-400 truncate font-medium">{course.summary?.cn || "点击查看详情"}</p>
                   </div>
-                  <div className="flex-none flex-shrink-0">
-                     <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-teal-50 transition-colors">
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-500" />
-                     </div>
-                  </div>
+                  <div className="flex-none flex-shrink-0"><div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-teal-50 transition-colors"><ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-teal-500" /></div></div>
                 </div>
               ))}
             </div>
@@ -994,15 +1113,25 @@ const CourseList = ({ setSelectedCourse }) => {
   );
 };
 
-const DailyCheckIn = ({ streak, setStreak, lastCheckIn, setLastCheckIn }) => {
+const DailyCheckIn = ({ streak, setStreak, lastCheckIn, setLastCheckIn, history, setHistory }) => {
   const [reflection, setReflection] = useState("");
+  const [showCalendar, setShowCalendar] = useState(false);
   const [checked, setChecked] = useState(false);
   useEffect(() => { if (lastCheckIn === new Date().toDateString()) setChecked(true); }, [lastCheckIn]);
-  const handleCheckIn = () => { if (!reflection.trim()) return; setStreak(s => s + 1); setLastCheckIn(new Date().toDateString()); setChecked(true); };
+  const handleCheckIn = () => { 
+    if (!reflection.trim()) return; 
+    const today = new Date().toDateString();
+    setStreak(s => s + 1); 
+    setLastCheckIn(today); 
+    setHistory(prev => ({ ...prev, [today]: reflection }));
+    setChecked(true); 
+  };
+
   return (
     <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 relative overflow-hidden">
-      <div className="flex justify-between mb-6 relative z-10"><h3 className="text-lg font-bold flex items-center text-slate-800"><Activity className="mr-2 text-teal-600 w-5 h-5" /> 每日复盘</h3><span className="text-xs font-bold bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full border border-teal-100">Day {streak}</span></div>
-      {checked ? <div className="text-center py-8 bg-green-50/50 rounded-xl border border-green-100"><CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-3" /><p className="text-green-800 font-bold text-sm">已完成</p></div> : <div className="space-y-4"><textarea className="w-full p-4 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white transition-colors" rows="3" placeholder="今天的感悟..." value={reflection} onChange={e => setReflection(e.target.value)} /><button onClick={handleCheckIn} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md shadow-teal-200">提交打卡</button></div>}
+      <div className="flex justify-between mb-6 relative z-10"><h3 className="text-lg font-bold flex items-center text-slate-800"><Activity className="mr-2 text-teal-600 w-5 h-5" /> 每日复盘</h3><div className="flex gap-2"><button onClick={() => setShowCalendar(true)} className="text-xs font-bold bg-white text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full flex items-center hover:bg-slate-50 transition-colors"><CalendarDays className="w-3.5 h-3.5 mr-1.5 text-teal-600"/> 日历</button><span className="text-xs font-bold bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full border border-teal-100">Day {streak}</span></div></div>
+      {checked ? <div className="text-center py-8 bg-green-50/50 rounded-xl border border-green-100"><CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-3" /><p className="text-green-800 font-bold text-sm">今日复盘已完成</p></div> : <div className="space-y-4"><textarea className="w-full p-4 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white transition-colors" rows="3" placeholder="今天的感悟..." value={reflection} onChange={e => setReflection(e.target.value)} /><button onClick={handleCheckIn} className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl text-sm transition-all shadow-md shadow-teal-200">提交打卡</button></div>}
+      {showCalendar && <CalendarModal history={history} onClose={() => setShowCalendar(false)} />}
     </div>
   );
 };
@@ -1012,110 +1141,151 @@ const InterviewSim = () => {
   const [show, setShow] = useState(false);
   const qs = [{ q: "Supervised vs Unsupervised?", a: "Training samples vs Statistical clustering." }, { q: "SAR Distortions?", a: "Foreshortening, Layover, Shadow." }];
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 h-full flex flex-col relative overflow-hidden">
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col h-full relative overflow-hidden">
       <div className="flex justify-between mb-8"><h3 className="font-bold text-lg flex text-slate-800"><RefreshCw className="mr-2 text-purple-600"/> 快速问答</h3><span className="text-xs font-mono font-bold bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100">Q-{idx + 1}</span></div>
-      <div className="flex-grow flex flex-col justify-center"><h4 className="text-xl font-bold mb-4 text-slate-800">{qs[idx].q}</h4>{show ? <div className="bg-slate-50 p-5 rounded-2xl text-sm border-l-4 border-purple-500 text-slate-700">{qs[idx].a}</div> : <div className="h-32 bg-slate-50 rounded-2xl border-dashed border-2 border-slate-200 flex items-center justify-center text-xs text-slate-400">Think...</div>}</div>
-      <div className="grid grid-cols-2 gap-4 mt-8"><button onClick={() => setShow(!show)} className="py-3 border border-slate-300 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">{show ? "隐藏答案" : "查看答案"}</button><button onClick={() => { setIdx((idx + 1) % qs.length); setShow(false); }} className="py-3 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg hover:bg-slate-800">下一题</button></div>
+      <div className="flex-grow flex flex-col justify-center"><h4 className="text-xl font-bold text-slate-800 mb-4 leading-snug">{qs[idx].q}</h4>{show ? <div className="bg-slate-50 p-5 rounded-2xl text-sm text-slate-700 border-l-4 border-purple-500 animate-in fade-in">{qs[idx].a}</div> : <div className="h-32 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">Think...</div>}</div>
+      <div className="grid grid-cols-2 gap-4 mt-8"><button onClick={() => setShow(!show)} className="py-3 border border-slate-300 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50">{show ? "隐藏答案" : "查看答案"}</button><button onClick={() => { setIdx((idx + 1) % qs.length); setShow(false); }} className="py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 text-sm font-bold shadow-lg">下一题</button></div>
     </div>
   );
 };
 
-const Dashboard = ({ setActiveTab }) => (
-  <div className="space-y-6 animate-in fade-in">
-    <div className="bg-gradient-to-r from-teal-700 to-emerald-600 rounded-3xl p-6 text-white shadow-xl shadow-teal-100 relative overflow-hidden">
-      <h1 className="text-3xl font-bold mb-2 relative z-10">Ready?</h1>
-      <p className="text-teal-50 text-sm mb-5 italic relative z-10">"{QUOTES[0]}"</p>
-      <div className="flex items-center text-xs font-mono bg-black/20 backdrop-blur-sm w-fit px-4 py-1.5 rounded-full border border-white/10 relative z-10"><GraduationCap className="w-3.5 h-3.5 mr-2" /> CUG {'->'} Germany</div>
-      <Layers className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12" />
+const Dashboard = ({ setActiveTab }) => {
+  const [history, setHistory] = useState(MOCK_HISTORY);
+  const [streak, setStreak] = useState(5);
+  const [lastCheckIn, setLastCheckIn] = useState("Thu Oct 12 2023");
+
+  return (
+    <div className="space-y-6 animate-in fade-in">
+      <div className="bg-gradient-to-r from-teal-700 to-emerald-600 rounded-3xl p-6 text-white shadow-xl shadow-teal-100 relative overflow-hidden">
+        <div className="relative z-10"><h1 className="text-3xl font-bold mb-2">Ready?</h1><p className="text-teal-50 text-sm mb-5 italic">"{QUOTES[0]}"</p><div className="flex items-center text-xs font-mono font-bold bg-black/20 backdrop-blur-sm w-fit px-4 py-1.5 rounded-full border border-white/10"><GraduationCap className="w-3.5 h-3.5 mr-2" /> CUG {'->'} Germany</div></div><Layers className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12" />
+      </div>
+      <DailyCheckIn streak={streak} setStreak={setStreak} lastCheckIn={lastCheckIn} setLastCheckIn={setLastCheckIn} history={history} setHistory={setHistory} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div onClick={() => setActiveTab('courses')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group active:scale-95"><div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-100 text-blue-600 transition-colors"><BookOpen className="w-6 h-6" /></div><h3 className="font-bold text-slate-700 text-lg">核心课程</h3><p className="text-xs text-slate-400 mt-1 font-medium">14门硬核复习</p></div>
+        <div onClick={() => setActiveTab('interview')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all group active:scale-95"><div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors text-purple-600"><MessageSquare className="w-6 h-6" /></div><h3 className="font-bold text-slate-700 text-lg">模拟面谈</h3><p className="text-xs text-slate-400 mt-1 font-medium">AI 考官实时对练</p></div>
+      </div>
     </div>
-    <DailyCheckIn streak={0} setStreak={() => {}} lastCheckIn={null} setLastCheckIn={() => {}} />
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div onClick={() => setActiveTab('courses')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group active:scale-95"><div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-100 text-blue-600 transition-colors"><BookOpen className="w-6 h-6" /></div><h3 className="font-bold text-slate-700 text-lg">核心课程</h3><p className="text-xs text-slate-400 mt-1 font-medium">14门硬核复习</p></div>
-      <div onClick={() => setActiveTab('interview')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all group active:scale-95"><div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors text-purple-600"><MessageSquare className="w-6 h-6" /></div><h3 className="font-bold text-slate-700 text-lg">模拟面谈</h3><p className="text-xs text-slate-400 mt-1 font-medium">AI 考官实时对练</p></div>
-    </div>
-  </div>
-);
+  );
+};
 
 // -----------------------------------------------------------------------------
-// 主入口 (Responsive Layout)
+// 主入口 (App - State Manager)
 // -----------------------------------------------------------------------------
 export default function App() {
   const [tab, setTab] = useState('dashboard');
-  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [selectedCourseId, setSelectedCourseId] = useState(null); // 核心修复：只存 ID
+  const [toast, setToast] = useState(null); 
+  
+  const useFavicon = () => {
+    useEffect(() => {
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#0d9488"/><text x="50" y="65" font-family="Arial" font-size="50" fill="white" text-anchor="middle" font-weight="bold">RS</text></svg>`;
+      link.href = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+      document.head.appendChild(link);
+      return () => document.head.removeChild(link);
+    }, []);
+  };
+  useFavicon();
 
-  // 简单的响应式内容渲染
+  const [coursesData, setCoursesData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('aps_courses_v7'); // 升级 v7 防止旧数据冲突
+      return saved ? JSON.parse(saved) : COURSE_DATA;
+    } catch {
+      return COURSE_DATA;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('aps_courses_v7', JSON.stringify(coursesData));
+  }, [coursesData]);
+
+  // 根据 ID 实时计算当前选中的课程对象 (Derived State)
+  const selectedCourse = selectedCourseId 
+    ? coursesData.flatMap(c => c.courses).find(c => c.id === selectedCourseId)
+    : null;
+
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const saveNote = (courseId, question, answer) => {
+    setCoursesData(prevData => prevData.map(cat => ({
+      ...cat,
+      courses: cat.courses.map(c => {
+        if (c.id === courseId) {
+          const newNote = { id: Date.now(), question, answer, date: new Date().toLocaleDateString() };
+          const existingNotes = c.notes || [];
+          return { ...c, notes: [newNote, ...existingNotes] };
+        }
+        return c;
+      })
+    })));
+    showToast("笔记已保存");
+  };
+
+  // 修复后的删除逻辑：只依赖 ID，不依赖对象引用
+  const deleteNote = (courseId, noteId) => {
+    if (!window.confirm("确定要删除这条笔记吗？")) return;
+    
+    setCoursesData(prevData => prevData.map(cat => ({
+      ...cat,
+      courses: cat.courses.map(c => {
+        if (c.id === courseId) {
+           return { ...c, notes: (c.notes || []).filter(n => n.id !== noteId) };
+        }
+        return c;
+      })
+    })));
+    showToast("笔记已删除");
+  };
+
   const renderContent = () => {
     switch(tab) {
       case 'dashboard': return <Dashboard setActiveTab={setTab} />;
-      case 'courses': return <CourseList setSelectedCourse={setSelectedCourse} />;
+      case 'courses': return <CourseList courses={coursesData} setSelectedCourse={c => setSelectedCourseId(c.id)} />;
       case 'interview': return <InterviewSim />;
       default: return null;
     }
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden">
-      
-      {/* Desktop Sidebar (Hidden on Mobile) */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full p-4 z-20">
-        <div className="flex items-center space-x-3 px-4 py-4 mb-6">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">RS</div>
-          <span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span>
+    <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden relative">
+      {toast && (
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900/90 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 z-[100] animate-in fade-in slide-in-from-top-4 backdrop-blur-sm">
+          <CheckCircle className="w-5 h-5 text-teal-400" />
+          <span className="text-sm font-medium">{toast}</span>
         </div>
+      )}
+
+      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full p-4 z-20 flex-shrink-0">
+        <div className="flex items-center space-x-3 px-4 py-4 mb-6"><div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">RS</div><span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span></div>
         <nav className="space-y-2 flex-1">
-          {[
-            { id: 'dashboard', label: '概览 Dashboard', icon: Layers },
-            { id: 'courses', label: '课程 Courses', icon: BookOpen },
-            { id: 'interview', label: '模拟 Interview', icon: Award },
-          ].map(item => (
-            <button
-              key={item.id}
-              onClick={() => setTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
-            </button>
+          {[{ id: 'dashboard', label: '概览 Dashboard', icon: Layers }, { id: 'courses', label: '课程 Courses', icon: BookOpen }, { id: 'interview', label: '模拟 Interview', icon: Award }].map(item => (
+            <button key={item.id} onClick={() => setTab(item.id)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}><item.icon className="w-5 h-5" /><span>{item.label}</span></button>
           ))}
         </nav>
-        <div className="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 px-4">
-          APS Prep Assistant v2.0
-        </div>
+        <div className="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 px-4">APS Prep Assistant v2.5</div>
       </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full relative">
-        
-        {/* Mobile Header (Hidden on Desktop) */}
-        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center z-30">
-          <div className="flex items-center space-x-3" onClick={() => setTab('dashboard')}>
-            <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">RS</div>
-            <span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span>
-          </div>
-          <Smartphone className="w-5 h-5 text-slate-400" />
-        </header>
-
-        {/* Content Scroll Area */}
-        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-8 max-w-7xl mx-auto w-full">
-           {renderContent()}
-        </main>
-
-        {/* Mobile Bottom Nav (Hidden on Desktop) */}
+      <div className="flex-1 flex flex-col h-full relative min-w-0">
+        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center z-30"><div className="flex items-center space-x-3" onClick={() => setTab('dashboard')}><div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">RS</div><span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span></div><Smartphone className="w-5 h-5 text-slate-400" /></header>
+        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-8 max-w-7xl mx-auto w-full">{renderContent()}</main>
         <nav className="md:hidden bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-30 pb-safe sm:pb-3">
-          <button onClick={() => setTab('dashboard')} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === 'dashboard' ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>
-            <Layers className="w-6 h-6" /> <span className="text-[10px] font-bold">概览</span>
-          </button>
-          <button onClick={() => setTab('courses')} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === 'courses' ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>
-            <BookOpen className="w-6 h-6" /> <span className="text-[10px] font-bold">课程</span>
-          </button>
-          <button onClick={() => setTab('interview')} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === 'interview' ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>
-            <Award className="w-6 h-6" /> <span className="text-[10px] font-bold">实战</span>
-          </button>
+          {['dashboard', 'courses', 'interview'].map(t => <button key={t} onClick={() => setTab(t)} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === t ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>{t === 'dashboard' ? <Layers className="w-6 h-6" /> : t === 'courses' ? <BookOpen className="w-6 h-6" /> : <Award className="w-6 h-6" />}<span className="text-[10px] font-bold uppercase">{t}</span></button>)}
         </nav>
       </div>
-
-      {/* Global Modal Layer */}
-      {selectedCourse && <CourseModal course={selectedCourse} onClose={() => setSelectedCourse(null)} />}
+      
+      {/* 始终渲染 Modal，通过 selectedCourseId 控制显示内容 */}
+      {selectedCourse && (
+        <CourseModal 
+          course={selectedCourse} 
+          onClose={() => setSelectedCourseId(null)} 
+          onSaveNote={saveNote}
+          onDeleteNote={deleteNote} 
+        />
+      )}
     </div>
   );
 }
