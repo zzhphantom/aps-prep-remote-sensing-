@@ -666,7 +666,7 @@ const Dashboard = ({ setActiveTab }) => {
 // -----------------------------------------------------------------------------
 // 主入口 (App - State Manager)
 // -----------------------------------------------------------------------------
-const Settings = ({ aiConfig, setAiConfig }) => {
+const Settings = ({ aiConfig, setAiConfig, showToast }) => {
   const [tempConfig, setTempConfig] = useState(aiConfig);
   const [showApiKey, setShowApiKey] = useState(false);
 
@@ -683,7 +683,12 @@ const Settings = ({ aiConfig, setAiConfig }) => {
 
   const handleSave = () => {
     setAiConfig(tempConfig);
-    // 可以添加保存成功的提示
+    // 添加保存成功的反馈
+    showToast('✅ 设置已保存！AI 配置已更新');
+    // 自动刷新页面以确保所有组件使用新的配置
+    setTimeout(() => {
+      window.location.reload();
+    }, 1500);
   };
 
   const handleTestConnection = async () => {
@@ -999,7 +1004,7 @@ export default function App() {
       case 'dashboard': return <Dashboard setActiveTab={setTab} />;
       case 'courses': return <CourseList courses={coursesData} setSelectedCourse={c => setSelectedCourseId(c.id)} />;
       case 'interview': return <InterviewSim />;
-      case 'settings': return <Settings aiConfig={aiConfig} setAiConfig={setAiConfig} />;
+      case 'settings': return <Settings aiConfig={aiConfig} setAiConfig={setAiConfig} showToast={showToast} />;
       default: return null;
     }
   };
