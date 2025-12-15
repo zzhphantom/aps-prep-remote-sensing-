@@ -17,308 +17,6 @@ const apiKey = "AIzaSyCADS6fXhqZ_kO_C1TRcx23dijzmbzmPVE"; // 🔴 请在此处�
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
 const KATEX_JS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
 
-// const QUOTES = [
-//   "遥感不仅仅是看图片，它是物理世界在数字空间的投影。",
-//   "APS考察的不是记忆力，而是你作为工程师的逻辑思维。",
-//   "从麦克斯韦方程组到卫星图像，中间贯穿着几何与物理的美。",
-//   "宁可慢一点，也要把基本概念彻底吃透。",
-//   "误差理论告诉我们：真值不可求，但我们可以无限逼近。",
-// ];
-
-// ============================================================================
-// 2. 核心数据 (14门 - 完整无删减版)
-// ============================================================================
-// const COURSE_DATA = [
-//   {
-//     category: "理论基础 (Fundamentals)",
-//     courses: [
-//       {
-//         id: "c1",
-//         name: "Principles and Applications of Remote Sensing (遥感原理与应用)",
-//         summary: { cn: "遥感科学的总纲：建立电磁波与地表交互的物理模型及成像基础。", en: "The overarching framework establishing physical models of EM wave-surface interactions." },
-//         goals: { cn: "精通电磁波谱、大气传输方程、地物光谱特征及四大分辨率权衡。", en: "Master EM spectrum, RTE, Spectral signatures, 4 Resolutions." },
-//         logicTree: {
-//           label: { cn: "遥感物理链路", en: "Physical Chain" },
-//           children: [
-//             {
-//               label: { cn: "1. 辐射源", en: "1. Source" },
-//               children: [
-//                 { label: { cn: "黑体辐射", en: "Blackbody" }, desc: { cn: "普朗克定律描述能量分布；维恩位移定律决定峰值波长。", en: "Planck's Law & Wien's Law." }, heavy: true },
-//                 { label: { cn: "大气传输", en: "Atmosphere" }, desc: { cn: "大气窗口：可见光、近红外、热红外、微波。", en: "Windows: VIS, NIR, TIR, Microwave." } }
-//               ]
-//             },
-//             {
-//               label: { cn: "2. 地物光谱响应", en: "2. Spectral Response" },
-//               children: [
-//                 { label: { cn: "植被", en: "Vegetation" }, desc: { cn: "可见光吸收(叶绿素) + 近红外高反(细胞结构) = 红边效应。", en: "Red Edge Effect." }, heavy: true },
-//                 { label: { cn: "水体", en: "Water" }, desc: { cn: "近红外/短波红外强吸收；悬浮物增加反射。", en: "NIR/SWIR absorption." } }
-//               ]
-//             },
-//             {
-//               label: { cn: "3. 传感器特性", en: "3. Sensor Traits" },
-//               children: [
-//                 { label: { cn: "四大分辨率", en: "Resolutions" }, desc: { cn: "空间、光谱、辐射、时间。", en: "Spatial, Spectral, Radiometric, Temporal." }, heavy: true }
-//               ]
-//             }
-//           ]
-//         },
-//         terms: [
-//           { cn: "大气窗口", en: "Atmospheric Window", desc_cn: "电磁波通过大气层时透过率较高的波段。", desc_en: "Spectral bands with high transmittance." },
-//           { cn: "光谱特征", en: "Spectral Signature", desc_cn: "不同地物在不同波段反射率的独特组合。", desc_en: "Unique variation of reflectance with wavelength." },
-//           { cn: "红边", en: "Red Edge", desc_cn: "植被在0.7μm附近反射率急剧上升的特征。", desc_en: "Sharp rise in reflectance near 0.7μm." }
-//         ],
-//         notes: [] 
-//       },
-//       {
-//         id: "c2",
-//         name: "Microwave Remote Sensing (微波遥感)",
-//         summary: { cn: "利用微波波段进行全天时、全天候的主动观测，侧重SAR原理。", en: "All-weather active microwave sensing, focusing on SAR principles." },
-//         goals: { cn: "理解雷达方程、SAR成像几何、多普勒原理、极化分解及InSAR干涉测量。", en: "Understand Radar Equation, SAR geometry, Doppler, PolSAR, and InSAR." },
-//         logicTree: {
-//           label: { cn: "SAR 系统", en: "SAR System" },
-//           children: [
-//             { label: { cn: "成像机理", en: "Imaging" }, desc: { cn: "测距(脉冲压缩)与方位(多普勒合成)。", en: "Ranging & Azimuth synthesis." }, heavy: true },
-//             { label: { cn: "几何畸变", en: "Distortions" }, desc: { cn: "透视收缩、叠掩、阴影。", en: "Foreshortening, Layover, Shadow." } },
-//             { label: { cn: "InSAR", en: "InSAR" }, desc: { cn: "利用相位差提取高程或形变。", en: "Phase diff for DEM/Deformation." } }
-//           ]
-//         },
-//         terms: [
-//           { cn: "后向散射系数", en: "Backscattering Coeff", desc_cn: "单位面积目标的散射强度(dB)。", desc_en: "Normalized radar cross-section." },
-//           { cn: "相位解缠", en: "Phase Unwrapping", desc_cn: "将周期性相位恢复为连续绝对相位。", desc_en: "Resolving 2pi ambiguities." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c3",
-//         name: "Thermal Infrared Remote Sensing (热红外遥感)",
-//         summary: { cn: "基于热辐射理论反演地表温度(LST)与发射率。", en: "Retrieving LST and emissivity based on thermal radiation theory." },
-//         goals: { cn: "掌握普朗克定律、基尔霍夫定律、分裂窗算法及城市热岛应用。", en: "Master Planck's Law, Kirchhoff's Law, Split-Window, UHI." },
-//         logicTree: {
-//           label: { cn: "LST 反演体系", en: "LST Retrieval Sys" },
-//           children: [
-//             { label: { cn: "物理定律", en: "Physics" }, desc: { cn: "普朗克定律与基尔霍夫定律。", en: "Planck & Kirchhoff Laws." }, heavy: true },
-//             { label: { cn: "反演算法", en: "Algorithms" }, desc: { cn: "单通道、分裂窗(SW)、TES算法。", en: "Single-Channel, Split-Window, TES." } },
-//             { label: { cn: "应用", en: "Apps" }, desc: { cn: "城市热岛(UHI)与土壤水分。", en: "UHI & Soil Moisture." } }
-//           ]
-//         },
-//         terms: [
-//           { cn: "热惯量", en: "Thermal Inertia", desc_cn: "物质阻碍温度变化的能力。", desc_en: "Resistance to temperature change." },
-//           { cn: "发射率", en: "Emissivity", desc_cn: "物体辐射能力与黑体之比。", desc_en: "Ratio of radiation to blackbody." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c4",
-//         name: "Remote Sensing of Natural Disasters (自然灾害遥感)",
-//         summary: { cn: "利用多源遥感进行灾害预警、评估与应急响应。", en: "Disaster warning, assessment, and response using RS." },
-//         goals: { cn: "掌握洪水(SAR)、地震(InSAR)、火灾(MIR)的监测机理。", en: "Mechanisms for Flood, Earthquake, and Fire monitoring." },
-//         logicTree: {
-//             label: { cn: "灾害响应", en: "Disaster Chain" },
-//             children: [
-//                 { label: { cn: "洪涝", en: "Flood" }, desc: { cn: "SAR镜面反射(暗)与水体指数。", en: "SAR specular reflection." } },
-//                 { label: { cn: "地质", en: "Geo-Hazard" }, desc: { cn: "InSAR监测形变。", en: "InSAR deformation." }, heavy: true },
-//                 { label: { cn: "火灾", en: "Fire" }, desc: { cn: "中红外对高温敏感; NBR指数。", en: "MIR sensitivity; NBR index." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "变化检测", en: "Change Detection", desc_cn: "提取不同时相的变化区域。", desc_en: "Identifying differences over time." },
-//             { cn: "NDWI", en: "NDWI", desc_cn: "归一化差异水体指数。", desc_en: "Normalized Difference Water Index." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c5",
-//         name: "Low Altitude UAV Remote Sensing (低空无人机遥感)",
-//         summary: { cn: "利用无人机平台获取超高分辨率数据的技术。", en: "High-res data acquisition using UAV." },
-//         goals: { cn: "掌握航线规划、SfM建模原理及正射影像生产。", en: "Flight planning, SfM, DOM." },
-//         logicTree: {
-//             label: { cn: "UAV 作业", en: "UAV Workflow" },
-//             children: [
-//                 { label: { cn: "航测", en: "Planning" }, desc: { cn: "重叠度与GSD设计。", en: "Overlap & GSD." } },
-//                 { label: { cn: "SfM", en: "SfM" }, desc: { cn: "运动恢复结构算法(特征匹配->平差)。", en: "Structure from Motion." }, heavy: true },
-//                 { label: { cn: "产出", en: "Products" }, desc: { cn: "点云 -> DSM/DOM。", en: "Point Cloud -> DSM/DOM." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "GSD", en: "Ground Sample Distance", desc_cn: "地面采样距离（像素大小）。", desc_en: "Ground pixel size." },
-//             { cn: "正射影像", en: "DOM", desc_cn: "经几何纠正的影像。", desc_en: "Digital Orthophoto Map." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c6",
-//         name: "Error Theory and Surveying Adjustment B (误差理论与测量平差)",
-//         summary: { cn: "处理观测数据误差，求取最优解的数学方法。", en: "Math methods for error handling." },
-//         goals: { cn: "掌握误差传播定律及最小二乘法原理。", en: "Error Propagation & Least Squares." },
-//         logicTree: {
-//             label: { cn: "平差", en: "Adjustment" },
-//             children: [
-//                 { label: { cn: "误差", en: "Errors" }, desc: { cn: "系统、偶然、粗差。", en: "Systematic, Random, Gross." } },
-//                 { label: { cn: "最小二乘", en: "Least Squares" }, desc: { cn: "VTPV最小化 (残差平方和最小)。", en: "Minimizing VTPV." }, heavy: true },
-//                 { label: { cn: "精度", en: "Accuracy" }, desc: { cn: "中误差与误差椭圆。", en: "RMSE & Error Ellipse." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "中误差", en: "RMSE", desc_cn: "衡量精度的标准。", desc_en: "Standard error." },
-//             { cn: "多余观测", en: "Redundancy", desc_cn: "平差的前提(观测数>未知数)。", desc_en: "More observations than unknowns." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c7",
-//         name: "Digital Image Processing (数字图像处理)",
-//         summary: { cn: "遥感影像的数学运算与自动化分析算法。", en: "Math operations on imagery." },
-//         goals: { cn: "掌握增强、滤波、PCA变换及分类。", en: "Enhancement, Filtering, PCA, Classification." },
-//         logicTree: {
-//             label: { cn: "DIP", en: "DIP" },
-//             children: [
-//                 { label: { cn: "增强", en: "Enhancement" }, desc: { cn: "直方图均衡、线性拉伸。", en: "Hist Eq, Stretching." } },
-//                 { label: { cn: "变换", en: "Transform" }, desc: { cn: "PCA(去相关), 缨帽变换。", en: "PCA, Tasseled Cap." } },
-//                 { label: { cn: "分类", en: "Classification" }, desc: { cn: "监督(MLC) vs 非监督(K-means)。", en: "Supervised vs Unsupervised." }, heavy: true }
-//             ]
-//         },
-//         terms: [
-//             { cn: "混淆矩阵", en: "Confusion Matrix", desc_cn: "分类精度评价。", desc_en: "Accuracy assessment." },
-//             { cn: "直方图", en: "Histogram", desc_cn: "像素频率分布。", desc_en: "Pixel frequency distribution." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c8",
-//         name: "Remote Sensing Image Interpretation (遥感图像解译)",
-//         summary: { cn: "从影像中提取语义信息的理论与方法。", en: "Extracting semantic info." },
-//         goals: { cn: "掌握目视解译八大要素及地学分析逻辑。", en: "Visual keys & Geo-analysis." },
-//         logicTree: {
-//             label: { cn: "解译", en: "Interpretation" },
-//             children: [
-//                 { label: { cn: "标志", en: "Keys" }, desc: { cn: "色调、形状、纹理、阴影等。", en: "Tone, Shape, Texture." }, heavy: true },
-//                 { label: { cn: "分析", en: "Analysis" }, desc: { cn: "水系格局、地貌形态判读。", en: "Drainage, Landform." } },
-//                 { label: { cn: "方法", en: "Methods" }, desc: { cn: "目视 vs 计算机(OBIA/CNN)。", en: "Visual vs Computer(OBIA/CNN)." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "纹理", en: "Texture", desc_cn: "色调变化频率。", desc_en: "Tonal variation." },
-//             { cn: "二分检索表", en: "Dichotomous Key", desc_cn: "逐步分类工具。", desc_en: "Step-by-step ID tool." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c9",
-//         name: "Remote Sensing Application Model (遥感应用模型)",
-//         summary: { cn: "将遥感数据转化为地学参数的模型(NPP/ET)。", en: "Models converting RS data to parameters." },
-//         goals: { cn: "理解经验模型、物理模型及数据同化。", en: "Empirical/Physical models." },
-//         logicTree: {
-//             label: { cn: "建模", en: "Modeling" },
-//             children: [
-//                 { label: { cn: "模型类型", en: "Types" }, desc: { cn: "统计(回归) vs 物理(RTE)。", en: "Statistical vs Physical." }, heavy: true },
-//                 { label: { cn: "典型模型", en: "Examples" }, desc: { cn: "NPP(CASA), 蒸散发(SEBAL)。", en: "NPP, ET." } },
-//                 { label: { cn: "同化", en: "Assimilation" }, desc: { cn: "融合模型与观测(Kalman)。", en: "Merging model & obs." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "反演", en: "Inversion", desc_cn: "信号推导参数。", desc_en: "Deriving parameters." },
-//             { cn: "数据同化", en: "Data Assimilation", desc_cn: "融合模拟与观测。", desc_en: "Merging model & observation." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c10",
-//         name: "Lecture on Frontiers of RS Knowledge",
-//         summary: { cn: "探索遥感前沿：高光谱、LiDAR、AI。", en: "Frontiers: Hyperspectral, LiDAR, AI." },
-//         goals: { cn: "了解高光谱解混、LiDAR点云、深度学习。", en: "Hyperspectral, LiDAR, DL." },
-//         logicTree: {
-//             label: { cn: "前沿", en: "Frontiers" },
-//             children: [
-//                 { label: { cn: "高光谱", en: "Hyperspectral" }, desc: { cn: "图谱合一，维数灾难。", en: "Imaging spectroscopy." }, heavy: true },
-//                 { label: { cn: "LiDAR", en: "LiDAR" }, desc: { cn: "三维点云，波形分析。", en: "3D point cloud." } },
-//                 { label: { cn: "AI", en: "AI" }, desc: { cn: "深度学习(CNN/Transformer)。", en: "Deep Learning." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "端元", en: "Endmember", desc_cn: "纯净像元光谱。", desc_en: "Pure pixel spectrum." },
-//             { cn: "混合像元", en: "Mixed Pixel", desc_cn: "像元含多种地物。", desc_en: "Pixel with multiple classes." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c11",
-//         name: "Comprehensive Internship in RS Applications (遥感应用综合实习)",
-//         summary: { cn: "综合应用全流程实践。", en: "Full workflow practice." },
-//         goals: { cn: "选题、处理、分析、报告。", en: "Topic, Process, Analysis, Report." },
-//         logicTree: {
-//             label: { cn: "流程", en: "Workflow" },
-//             children: [
-//                 { label: { cn: "准备", en: "Prep" }, desc: { cn: "选题与数据获取。", en: "Topic & Data." } },
-//                 { label: { cn: "处理", en: "Process" }, desc: { cn: "预处理(校正)与提取(分类/指数)。", en: "Correction & Extraction." }, heavy: true },
-//                 { label: { cn: "产出", en: "Output" }, desc: { cn: "精度验证与制图。", en: "Validation & Mapping." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "专题图", en: "Thematic Map", desc_cn: "特定主题地图。", desc_en: "Theme map." },
-//             { cn: "转移矩阵", en: "Transition Matrix", desc_cn: "量化变化面积。", desc_en: "Quantifying change." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c12",
-//         name: "Practice of RS Principles and Applications (遥感原理与应用实验)",
-//         summary: { cn: "软件操作实验(ENVI/ArcGIS)。", en: "Software Labs (ENVI)." },
-//         goals: { cn: "几何校正、监督分类操作。", en: "Geo-correction, Classification." },
-//         logicTree: {
-//             label: { cn: "实验", en: "Labs" },
-//             children: [
-//                 { label: { cn: "基础", en: "Basic" }, desc: { cn: "波段组合显示。", en: "Band combination." } },
-//                 { label: { cn: "校正", en: "Correction" }, desc: { cn: "GCP选取与重采样。", en: "GCP selection." }, heavy: true },
-//                 { label: { cn: "分类", en: "Classify" }, desc: { cn: "ROI建立与最大似然法。", en: "ROI & MLC." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "GCP", en: "GCP", desc_cn: "地面控制点。", desc_en: "Ground Control Point." },
-//             { cn: "ROI", en: "ROI", desc_cn: "感兴趣区。", desc_en: "Region of Interest." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c13",
-//         name: "Internship in RS Image Processing (遥感图像处理综合实习)",
-//         summary: { cn: "专注编程实现(Python/GDAL)。", en: "Coding (Python/GDAL)." },
-//         goals: { cn: "GDAL读写、算法复现。", en: "GDAL I/O, Algo coding." },
-//         logicTree: {
-//             label: { cn: "编程", en: "Coding" },
-//             children: [
-//                 { label: { cn: "环境", en: "Env" }, desc: { cn: "Python, GDAL, Numpy。", en: "Libs setup." } },
-//                 { label: { cn: "I/O", en: "I/O" }, desc: { cn: "读写GeoTIFF。", en: "Read/Write TIFF." } },
-//                 { label: { cn: "算法", en: "Algo" }, desc: { cn: "NDVI计算、K-means。", en: "NDVI, K-means." }, heavy: true }
-//             ]
-//         },
-//         terms: [
-//             { cn: "GDAL", en: "GDAL", desc_cn: "栅格数据处理库。", desc_en: "Raster library." },
-//             { cn: "Numpy", en: "Numpy", desc_cn: "科学计算库。", desc_en: "Scientific computing lib." }
-//         ],
-//         notes: []
-//       },
-//       {
-//         id: "c14",
-//         name: "RS Application Model Internship (遥感应用模型实习)",
-//         summary: { cn: "定量建模实践(估产/水质)。", en: "Quantitative modeling." },
-//         goals: { cn: "回归分析、模型构建。", en: "Regression, Modeling." },
-//         logicTree: {
-//             label: { cn: "建模", en: "Model Flow" },
-//             children: [
-//                 { label: { cn: "匹配", en: "Match" }, desc: { cn: "影像与地面时空匹配。", en: "Space-time matching." }, heavy: true },
-//                 { label: { cn: "回归", en: "Regress" }, desc: { cn: "特征筛选 -> 方程。", en: "Feature sel -> Equation." } },
-//                 { label: { cn: "验证", en: "Valid" }, desc: { cn: "R²与RMSE评价。", en: "R2 & RMSE." } }
-//             ]
-//         },
-//         terms: [
-//             { cn: "拟合优度", en: "R2", desc_cn: "模型解释程度。", desc_en: "Model fit." },
-//             { cn: "留一法", en: "LOOCV", desc_cn: "交叉验证方法。", desc_en: "Cross-validation." }
-//         ],
-//         notes: []
-//       }
-//     ]
-//   }
-// ];
 
 // ============================================================================
 // 3. 渲染引擎
@@ -358,11 +56,28 @@ const useKatex = () => {
   return isLoaded;
 };
 
-// 动态注入 App 图标 (Favicon & Apple Touch Icon)
+// 🌟 动态注入 App 图标 (Canvas 生成 PNG 方式，兼容 iOS)
 const useFavicon = () => {
   useEffect(() => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#0d9488"/><text x="50%" y="50%" dy=".35em" font-family="Arial, sans-serif" font-weight="bold" font-size="250" fill="white" text-anchor="middle">RS</text></svg>`;
-    const iconUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+    const canvas = document.createElement('canvas');
+    canvas.width = 192;
+    canvas.height = 192;
+    const ctx = canvas.getContext('2d');
+
+    // 1. 绘制圆角背景
+    ctx.fillStyle = '#0d9488'; // Teal-600
+    ctx.beginPath();
+    ctx.rect(0, 0, 192, 192); 
+    ctx.fill();
+
+    // 2. 绘制文字
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 100px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('RS', 96, 96);
+
+    const iconUrl = canvas.toDataURL('image/png');
 
     const setLink = (rel, href) => {
       let link = document.querySelector(`link[rel="${rel}"]`);
@@ -375,7 +90,7 @@ const useFavicon = () => {
     };
 
     setLink('icon', iconUrl);
-    setLink('apple-touch-icon', iconUrl);
+    setLink('apple-touch-icon', iconUrl); 
   }, []);
 };
 
@@ -400,6 +115,7 @@ const InlineRenderer = ({ text }) => {
   const parts = [];
   let lastIndex = 0;
   let match;
+
   while ((match = regex.exec(text)) !== null) {
     if (match.index > lastIndex) parts.push(text.substring(lastIndex, match.index));
     if (match[1]) parts.push(<strong key={match.index} className="text-slate-900 font-bold">{match[2]}</strong>);
@@ -481,28 +197,16 @@ const MarkdownRenderer = ({ content }) => {
     <div className="space-y-4 text-sm leading-relaxed text-slate-700">
       {blocks.map((block, idx) => {
         if (block.type === 'math') return <div key={idx} className="my-4 p-3 bg-slate-50 border border-slate-200 rounded-lg overflow-x-auto shadow-sm text-center"><KatexMath tex={block.content} block={true} /></div>;
-        if (block.type === 'heading') {
-          const styles = block.level === 1 ? "font-bold text-xl text-slate-900 border-b border-slate-200 pb-2 mb-3 mt-6" : block.level === 2 ? "font-bold text-lg text-teal-800 mt-5 mb-2 border-b border-slate-100 pb-1" : "font-bold text-base text-slate-800 mt-4 mb-1";
-          return <div key={idx} className={styles}><InlineRenderer text={block.content} /></div>;
-        }
+        if (block.type === 'heading') return <div key={idx} className={`font-bold text-slate-900 ${block.level===1?'text-xl border-b pb-2 mt-6':block.level===2?'text-lg text-teal-800 mt-5':'text-base mt-4'}`}><InlineRenderer text={block.content} /></div>;
         if (block.type === 'cn-heading') return <div key={idx} className="font-bold text-indigo-700 mt-5 mb-2 text-base bg-indigo-50/50 p-2 rounded-lg border-l-4 border-indigo-400"><InlineRenderer text={block.content} /></div>;
         if (block.type === 'hr') return <hr key={idx} className="border-t border-slate-200 my-6" />;
         if (block.type === 'table') {
-          const [header, separator, ...body] = block.lines;
-          const parseRow = (row) => (row || "").split('|').map(c => c.trim()).filter(c => c);
-          const headers = parseRow(header);
-          const rows = body.map(parseRow);
-          return (
-            <div key={idx} className="my-4 overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white">
-              <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                <thead className="bg-slate-50 text-slate-700 font-bold"><tr>{headers.map((h, i) => <th key={i} className="p-3 border-b border-slate-200 whitespace-nowrap"><InlineRenderer text={h} /></th>)}</tr></thead>
-                <tbody className="bg-white">{rows.map((row, rIdx) => <tr key={rIdx} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">{row.map((cell, cIdx) => <td key={cIdx} className="p-3 text-slate-600"><InlineRenderer text={cell} /></td>)}</tr>)}</tbody>
-              </table>
-            </div>
-          );
+          const [h, s, ...b] = block.lines;
+          const parse = r => (r||"").split('|').map(c=>c.trim()).filter(c=>c);
+          return <div key={idx} className="my-4 overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white"><table className="w-full text-left text-xs sm:text-sm border-collapse"><thead className="bg-slate-50 text-slate-700 font-bold"><tr>{parse(h).map((c,i)=><th key={i} className="p-3 border-b border-slate-200 whitespace-nowrap"><InlineRenderer text={c}/></th>)}</tr></thead><tbody className="bg-white">{b.map((r,i)=><tr key={i} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50">{parse(r).map((c,j)=><td key={j} className="p-3 text-slate-600"><InlineRenderer text={c}/></td>)}</tr>)}</tbody></table></div>;
         }
-        if (block.type === 'list') return <div key={idx} className="space-y-1 my-2 pl-1">{block.lines.map((item, i) => { const isNum = /^\d+\.\s/.test(item); const content = item.replace(/^[\*\-]\s|^\d+\.\s/, ''); return <div key={i} className="flex items-start">{isNum ? <span className="mr-2 font-bold text-teal-600 text-xs mt-0.5">{item.match(/^\d+\./)[0]}</span> : <div className="mr-2 mt-2 w-1.5 h-1.5 bg-teal-400 rounded-full flex-shrink-0" />}<div className="flex-1 text-slate-600"><InlineRenderer text={content} /></div></div>; })}</div>;
-        if (block.type === 'text') return <div key={idx} className="space-y-2">{block.lines.map((l, i) => <div key={i} className="text-justify"><InlineRenderer text={l} /></div>)}</div>;
+        if (block.type === 'list') return <div key={idx} className="space-y-1 my-2 pl-1">{block.lines.map((it, i) => <div key={i} className="flex items-start">{/^\d+\.\s/.test(it)?<span className="mr-2 font-bold text-teal-600 text-xs mt-0.5">{it.match(/^\d+\./)[0]}</span>:<div className="mr-2 mt-2 w-1.5 h-1.5 bg-teal-400 rounded-full flex-shrink-0"/>}<div className="flex-1 text-slate-600"><InlineRenderer text={it.replace(/^[\*\-]\s|^\d+\.\s/,'')}/></div></div>)}</div>;
+        if (block.type === 'text') return <div key={idx} className="space-y-2">{block.lines.map((l,i)=><div key={i} className="text-justify"><InlineRenderer text={l}/></div>)}</div>;
         return null;
       })}
     </div>
@@ -663,7 +367,8 @@ const NoteCard = ({ note, onDelete, onView }) => {
         <button 
           onClick={(e) => { 
             e.stopPropagation(); 
-            onDelete(note.id); // 直接调用，参数已在父级绑定
+            // 核心修复：直接调用传递下来的 onDelete，参数已由父组件闭包绑定
+            onDelete(); 
           }} 
           className="text-yellow-600 hover:text-red-500 p-1.5 -mr-1.5 -mt-1.5 rounded-full hover:bg-yellow-100 transition-all z-10"
           title="删除笔记"
@@ -753,17 +458,16 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote }) => {
             </div>
           )}
 
-          {/* 笔记列表 */}
           {course.notes && course.notes.length > 0 && (
             <div>
               <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-4"><StickyNote className="w-4 h-4 mr-2" /> 学习笔记 ({course.notes.length})</h4>
               <div className="grid grid-cols-1 gap-3">
                 {course.notes.map((note) => (
-                  // ✅ 关键修复：正确传递参数给 onDeleteNote
+                  // ✅ 关键修复：正确传递删除回调，闭包当前课程ID
                   <NoteCard 
                     key={note.id} 
                     note={note} 
-                    onDelete={(noteId) => onDeleteNote(course.id, noteId)} 
+                    onDelete={() => onDeleteNote(course.id, note.id)} 
                     onView={setViewingNote} 
                   />
                 ))}
@@ -903,7 +607,7 @@ export default function App() {
 
   const [coursesData, setCoursesData] = useState(() => {
     try {
-      const saved = localStorage.getItem('aps_courses_v8'); // 升级 v8 防止旧数据冲突
+      const saved = localStorage.getItem('aps_courses_v8'); // 升级 V8 清除旧缓存
       return saved ? JSON.parse(saved) : COURSE_DATA;
     } catch {
       return COURSE_DATA;
@@ -939,7 +643,7 @@ export default function App() {
     showToast("笔记已保存");
   };
 
-  // 修复后的删除逻辑：只依赖 ID，不依赖对象引用
+  // ✅ 核心修复：删除逻辑
   const deleteNote = (courseId, noteId) => {
     if (!window.confirm("确定要删除这条笔记吗？")) return;
     
