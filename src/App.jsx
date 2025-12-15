@@ -4,15 +4,20 @@ import {
   ChevronRight, Award, RefreshCw, Layers, Sparkles, X, 
   Smartphone, GraduationCap, FileText, Globe, Network, 
   Languages, Zap, Activity, Plus, MessageSquare, StickyNote, 
-  Save, Trash2, ChevronLeft, CalendarDays, Check, Maximize2
+  Save, Trash2, ChevronLeft, CalendarDays, Check, Maximize2, Eye, EyeOff
 } from 'lucide-react';
 
 import {QUOTES , COURSE_DATA} from './data';
+import CheckinCalendar from './components/CheckinCalendar';
+import { db } from './firebase';
+import { collection, addDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
+
+const DEMO_USER_ID = 'demo-user-1';
 
 // ============================================================================
 // 1. 全局配置与 API
 // ============================================================================
-const apiKey = "AIzaSyCADS6fXhqZ_kO_C1TRcx23dijzmbzmPVE"; // 🔴 请在此处填入您的 API Key
+// API Key 现在通过用户设置管理，不再硬编码
 
 const KATEX_CSS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css";
 const KATEX_JS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
@@ -22,10 +27,16 @@ const KATEX_JS = "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js";
 // 3. 渲染引擎
 // ============================================================================
 
-const callGemini = async (prompt) => {
+const callGemini = async (prompt, config = {}) => {
+  const { model = 'gemini-2.5-flash-preview-09-2025', apiKey: customApiKey } = config;
+
+  if (!customApiKey) {
+    return "⚠️ 请先配置 API Key！\n\n请前往「设置」页面添加您的 Google AI API Key：\n1. 访问 https://makersuite.google.com/app/apikey\n2. 创建新的 API Key\n3. 在设置页面输入并保存\n\n配置完成后即可使用 AI 功能。";
+  }
+
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${customApiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -38,7 +49,7 @@ const callGemini = async (prompt) => {
     return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI 思考超时，请重试。";
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "AI 服务暂时不可用，请检查网络设置。";
+    return "AI 服务暂时不可用，请检查网络设置或 API Key 配置。";
   }
 };
 
@@ -406,18 +417,32 @@ const NoteReaderModal = ({ note, onClose }) => {
 };
 
 // 3. 课程详情弹窗
-const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote }) => {
+const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setTab }) => {
   const [aiQuery, setAiQuery] = useState("");
   const [aiResponse, setAiResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false); // 保存状态反馈
   const [viewingNote, setViewingNote] = useState(null); // 当前查看的笔记
+  const [isComposing, setIsComposing] = useState(false); // 中文输入法状态
 
   const handleAiAsk = async () => {
     if (!aiQuery.trim()) return;
+    
+    // 检查是否已配置 API Key
+    if (!aiConfig.apiKey) {
+      // 显示弹窗提示用户去设置
+      const shouldGoToSettings = window.confirm('请先配置 API Key！\n\n需要前往设置页面添加 Google AI API Key 吗？');
+      if (shouldGoToSettings) {
+        // 关闭当前弹窗并跳转到设置页面
+        onClose();
+        setTab('settings');
+      }
+      return;
+    }
+    
     setLoading(true);
     setIsSaved(false); // 重新提问时重置保存状态
-    const res = await callGemini(`背景：APS审核。课程：${course.name}。问题：${aiQuery}。请用中文回答，术语附带英文，公式用$$格式(独立行)，表格用Markdown格式。`);
+    const res = await callGemini(`背景：APS审核。课程：${course.name}。问题：${aiQuery}。请用中文回答，术语附带英文，公式用$$格式(独立行)，表格用Markdown格式。`, aiConfig);
     setAiResponse(res);
     setLoading(false);
   };
@@ -478,7 +503,36 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote }) => {
           <div className="bg-gradient-to-br from-purple-50 to-white rounded-xl p-5 border border-purple-100 shadow-sm">
             <h4 className="flex items-center text-sm font-bold text-purple-700 uppercase tracking-wider mb-3"><Sparkles className="w-4 h-4 mr-2" /> AI 深度追问</h4>
             <div className="flex gap-2 mb-4">
-              <input type="text" value={aiQuery} onChange={(e) => {setAiQuery(e.target.value); setIsSaved(false);}} placeholder="例如：为什么SAR会有阴影？" className="flex-grow text-sm p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white shadow-inner" />
+              <textarea
+                value={aiQuery}
+                onChange={(e) => {setAiQuery(e.target.value); setIsSaved(false);}}
+                onCompositionStart={() => setIsComposing(true)}
+                onCompositionEnd={() => setIsComposing(false)}
+                onKeyDown={(e) => {
+                  // Shift+Enter 换行 - 允许默认行为
+                  if (e.key === 'Enter' && e.shiftKey) {
+                    return; // 允许默认换行
+                  }
+                  // 只有单纯的Enter键（无修饰键）且不在中文输入状态时才提交
+                  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !loading && !isComposing) {
+                    e.preventDefault(); // 阻止默认提交
+                    handleAiAsk();
+                  }
+                }}
+                placeholder="例如：为什么SAR会有阴影？"
+                className="flex-grow text-sm p-3 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none bg-white shadow-inner resize-none overflow-hidden"
+                rows="1"
+                style={{
+                  minHeight: '2.75rem', // 匹配padding
+                  height: 'auto',
+                  maxHeight: '6rem' // 限制最大高度
+                }}
+                onInput={(e) => {
+                  // 自动调整高度
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 6 * 16) + 'px'; // 6rem = 96px
+                }}
+              />
               <button onClick={handleAiAsk} disabled={loading} className="bg-purple-600 text-white px-5 py-2 rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors disabled:opacity-50 shadow-md shadow-purple-200 flex-shrink-0">{loading ? "..." : "Ask"}</button>
             </div>
             {aiResponse && (
@@ -567,19 +621,43 @@ const InterviewSim = () => {
 };
 
 const Dashboard = ({ setActiveTab }) => {
-  const [history, setHistory] = useState(MOCK_HISTORY);
-  const [streak, setStreak] = useState(5);
-  const [lastCheckIn, setLastCheckIn] = useState("Thu Oct 12 2023");
-
   return (
     <div className="space-y-6 animate-in fade-in">
       <div className="bg-gradient-to-r from-teal-700 to-emerald-600 rounded-3xl p-6 text-white shadow-xl shadow-teal-100 relative overflow-hidden">
-        <div className="relative z-10"><h1 className="text-3xl font-bold mb-2">Ready?</h1><p className="text-teal-50 text-sm mb-5 italic">"{QUOTES[0]}"</p><div className="flex items-center text-xs font-mono font-bold bg-black/20 backdrop-blur-sm w-fit px-4 py-1.5 rounded-full border border-white/10"><GraduationCap className="w-3.5 h-3.5 mr-2" /> CUG {'->'} Germany</div></div><Layers className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12" />
+        <div className="relative z-10">
+          <h1 className="text-3xl font-bold mb-2">Ready?</h1>
+          <p className="text-teal-50 text-sm mb-5 italic">"{QUOTES[0]}"</p>
+          <div className="flex items-center text-xs font-mono font-bold bg-black/20 backdrop-blur-sm w-fit px-4 py-1.5 rounded-full border border-white/10">
+            <GraduationCap className="w-3.5 h-3.5 mr-2" /> CUG {'->'} Germany
+          </div>
+        </div>
+        <Layers className="absolute -right-8 -bottom-8 w-48 h-48 text-white/5 rotate-12" />
       </div>
-      <DailyCheckIn streak={streak} setStreak={setStreak} lastCheckIn={lastCheckIn} setLastCheckIn={setLastCheckIn} history={history} setHistory={setHistory} />
+
+      {/* Firestore 打卡日历同步 */}
+      <CheckinCalendar userId={DEMO_USER_ID} />
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div onClick={() => setActiveTab('courses')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group active:scale-95"><div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-100 text-blue-600 transition-colors"><BookOpen className="w-6 h-6" /></div><h3 className="font-bold text-slate-700 text-lg">核心课程</h3><p className="text-xs text-slate-400 mt-1 font-medium">14门硬核复习</p></div>
-        <div onClick={() => setActiveTab('interview')} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all group active:scale-95"><div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors text-purple-600"><MessageSquare className="w-6 h-6" /></div><h3 className="font-bold text-slate-700 text-lg">模拟面谈</h3><p className="text-xs text-slate-400 mt-1 font-medium">AI 考官实时对练</p></div>
+        <div
+          onClick={() => setActiveTab('courses')}
+          className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group active:scale-95"
+        >
+          <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-100 text-blue-600 transition-colors">
+            <BookOpen className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-slate-700 text-lg">核心课程</h3>
+          <p className="text-xs text-slate-400 mt-1 font-medium">14门硬核复习</p>
+        </div>
+        <div
+          onClick={() => setActiveTab('interview')}
+          className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm cursor-pointer hover:border-purple-400 hover:shadow-md transition-all group active:scale-95"
+        >
+          <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-100 transition-colors text-purple-600">
+            <MessageSquare className="w-6 h-6" />
+          </div>
+          <h3 className="font-bold text-slate-700 text-lg">模拟面谈</h3>
+          <p className="text-xs text-slate-400 mt-1 font-medium">AI 考官实时对练</p>
+        </div>
       </div>
     </div>
   );
@@ -588,10 +666,185 @@ const Dashboard = ({ setActiveTab }) => {
 // -----------------------------------------------------------------------------
 // 主入口 (App - State Manager)
 // -----------------------------------------------------------------------------
+const Settings = ({ aiConfig, setAiConfig }) => {
+  const [tempConfig, setTempConfig] = useState(aiConfig);
+  const [showApiKey, setShowApiKey] = useState(false);
+
+  const models = [
+    { id: 'gemini-2.5-flash-preview-09-2025', name: 'Gemini 2.5 Flash (最新)', provider: 'google' },
+    { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite', provider: 'google' },
+    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google' },
+    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite', provider: 'google' },
+    { id: 'gemini-2.5-flash-native-audio-dialog', name: 'Gemini 2.5 Flash Native Audio Dialog', provider: 'google' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'google' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', provider: 'google' },
+    { id: 'gemini-pro', name: 'Gemini Pro', provider: 'google' },
+  ];
+
+  const handleSave = () => {
+    setAiConfig(tempConfig);
+    // 可以添加保存成功的提示
+  };
+
+  const handleTestConnection = async () => {
+    if (!tempConfig.apiKey) {
+      alert('请先输入 API Key');
+      return;
+    }
+    
+    try {
+      const testPrompt = "请回复'连接成功'来测试API连接。";
+      const response = await callGemini(testPrompt, tempConfig);
+      if (response.includes('连接成功') || response.includes('success')) {
+        alert('API 连接测试成功！');
+      } else {
+        alert('API 连接测试成功！响应：' + response.substring(0, 50) + '...');
+      }
+    } catch (error) {
+      alert('API 连接测试失败：' + error.message);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* API Key 状态提示 */}
+      {!tempConfig.apiKey && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 text-amber-600 mt-0.5">⚠️</div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-800 mb-1">需要配置 API Key</h3>
+              <p className="text-sm text-amber-700">
+                请在下方输入您的 Google AI API Key 以启用 AI 功能。未配置 API Key 时，AI 问答功能将无法使用。
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tempConfig.apiKey && (
+        <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 text-green-600 mt-0.5">✅</div>
+            <div>
+              <h3 className="text-sm font-bold text-green-800 mb-1">API Key 已配置</h3>
+              <p className="text-sm text-green-700">
+                AI 功能已启用，您可以正常使用 AI 问答功能。
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+          <Sparkles className="w-6 h-6 text-teal-600" />
+          AI 设置
+        </h2>
+
+        <div className="space-y-6">
+          {/* API Key 设置 */}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              API Key
+            </label>
+            <div className="relative">
+              <input
+                type={showApiKey ? "text" : "password"}
+                value={tempConfig.apiKey}
+                onChange={(e) => setTempConfig({...tempConfig, apiKey: e.target.value})}
+                placeholder="输入您的 Google AI API Key"
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+              />
+              <button
+                onClick={() => setShowApiKey(!showApiKey)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showApiKey ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              从 <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:underline">Google AI Studio</a> 获取 API Key
+            </p>
+          </div>
+
+          {/* 模型选择 */}
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">
+              AI 模型
+            </label>
+            <select
+              value={tempConfig.model}
+              onChange={(e) => setTempConfig({...tempConfig, model: e.target.value})}
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors"
+            >
+              {models.map(model => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 操作按钮 */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleTestConnection}
+              className="px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white font-bold rounded-xl transition-colors"
+            >
+              测试连接
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-xl transition-colors"
+            >
+              保存设置
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 使用说明 */}
+      <div className="bg-blue-50 rounded-2xl border border-blue-100 p-6">
+        <h3 className="text-lg font-bold text-blue-800 mb-3">使用说明</h3>
+        <ul className="text-sm text-blue-700 space-y-2">
+          <li>• API Key 只会保存在您的浏览器本地，不会上传到服务器</li>
+          <li>• 建议使用 Gemini 2.5 Flash 模型，速度快且功能强大</li>
+          <li>• 测试连接功能可以验证您的 API Key 是否正确配置</li>
+          <li>• 更换模型或 API Key 后需要刷新页面才能生效</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [selectedCourseId, setSelectedCourseId] = useState(null); // 核心修复：只存 ID
-  const [toast, setToast] = useState(null); 
+  const [toast, setToast] = useState(null);
+  
+  // AI 配置状态
+  const [aiConfig, setAiConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ai_config');
+      return saved ? JSON.parse(saved) : {
+        model: 'gemini-2.5-flash-preview-09-2025',
+        apiKey: '',
+        provider: 'google'
+      };
+    } catch {
+      return {
+        model: 'gemini-2.5-flash-preview-09-2025',
+        apiKey: '',
+        provider: 'google'
+      };
+    }
+  });
+  
+  // 保存 AI 配置到 localStorage
+  useEffect(() => {
+    localStorage.setItem('ai_config', JSON.stringify(aiConfig));
+  }, [aiConfig]); 
   
   const useFavicon = () => {
     useEffect(() => {
@@ -607,7 +860,7 @@ export default function App() {
 
   const [coursesData, setCoursesData] = useState(() => {
     try {
-      const saved = localStorage.getItem('aps_courses_v8'); // 升级 V8 清除旧缓存
+      const saved = localStorage.getItem('aps_courses_v8'); // 升级 v8 清除旧缓存
       return saved ? JSON.parse(saved) : COURSE_DATA;
     } catch {
       return COURSE_DATA;
@@ -617,6 +870,56 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('aps_courses_v8', JSON.stringify(coursesData));
   }, [coursesData]);
+
+  // 从 Firestore 加载当前用户的学习笔记并合并到课程数据中
+  useEffect(() => {
+    const loadNotesFromFirestore = async () => {
+      try {
+        const q = query(
+          collection(db, 'notes'),
+          where('userId', '==', DEMO_USER_ID)
+        );
+        const snapshot = await getDocs(q);
+        const remoteNotes = snapshot.docs.map(docSnap => ({
+          id: docSnap.id,
+          ...docSnap.data(),
+        }));
+
+        setCoursesData(prev =>
+          prev.map(cat => ({
+            ...cat,
+            courses: cat.courses.map(course => {
+              const notesForCourse = remoteNotes.filter(
+                n => n.courseId === course.id
+              );
+              if (!notesForCourse.length) return course;
+              const formatted = notesForCourse
+                .map(n => ({
+                  id: n.id,
+                  question: n.question,
+                  answer: n.answer,
+                  date: n.createdAt
+                    ? new Date(n.createdAt.seconds * 1000).toLocaleDateString()
+                    : new Date().toLocaleDateString(),
+                }))
+                // 新的在前
+                .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+              // 只使用 Firestore 的数据，不合并现有的本地数据
+              return {
+                ...course,
+                notes: formatted,
+              };
+            }),
+          }))
+        );
+      } catch (e) {
+        console.error('加载 Firestore 笔记失败:', e);
+      }
+    };
+
+    loadNotesFromFirestore();
+  }, []);
 
   // 根据 ID 实时计算当前选中的课程对象 (Derived State)
   const selectedCourse = selectedCourseId 
@@ -628,35 +931,67 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const saveNote = (courseId, question, answer) => {
-    setCoursesData(prevData => prevData.map(cat => ({
-      ...cat,
-      courses: cat.courses.map(c => {
-        if (c.id === courseId) {
-          const newNote = { id: Date.now(), question, answer, date: new Date().toLocaleDateString() };
-          const existingNotes = c.notes || [];
-          return { ...c, notes: [newNote, ...existingNotes] };
-        }
-        return c;
-      })
-    })));
-    showToast("笔记已保存");
+  const saveNote = async (courseId, question, answer) => {
+    try {
+      const createdAt = new Date();
+      const docRef = await addDoc(collection(db, 'notes'), {
+        userId: DEMO_USER_ID,
+        courseId,
+        question,
+        answer,
+        createdAt,
+      });
+
+      const newNote = {
+        id: docRef.id,
+        question,
+        answer,
+        date: createdAt.toLocaleDateString(),
+      };
+
+      setCoursesData(prevData =>
+        prevData.map(cat => ({
+          ...cat,
+          courses: cat.courses.map(c => {
+            if (c.id === courseId) {
+              const existingNotes = c.notes || [];
+              return { ...c, notes: [newNote, ...existingNotes] };
+            }
+            return c;
+          }),
+        }))
+      );
+
+      showToast('笔记已保存（已同步到云端）');
+    } catch (e) {
+      console.error('保存笔记到 Firestore 失败:', e);
+      showToast('笔记保存失败，请稍后重试');
+    }
   };
 
-  // ✅ 核心修复：删除逻辑
-  const deleteNote = (courseId, noteId) => {
-    if (!window.confirm("确定要删除这条笔记吗？")) return;
-    
-    setCoursesData(prevData => prevData.map(cat => ({
-      ...cat,
-      courses: cat.courses.map(c => {
-        if (c.id === courseId) {
-           return { ...c, notes: (c.notes || []).filter(n => n.id !== noteId) };
-        }
-        return c;
-      })
-    })));
-    showToast("笔记已删除");
+  // 删除本地 & Firestore 中的学习笔记
+  const deleteNote = async (courseId, noteId) => {
+    if (!window.confirm('确定要删除这条笔记吗？')) return;
+
+    try {
+      await deleteDoc(doc(db, 'notes', noteId));
+    } catch (e) {
+      // 如果是本地初始化示例笔记（没有对应云端文档），忽略删除错误
+      console.warn('删除 Firestore 笔记时出现问题（可忽略示例数据）:', e);
+    }
+
+    setCoursesData(prevData =>
+      prevData.map(cat => ({
+        ...cat,
+        courses: cat.courses.map(c => {
+          if (c.id === courseId) {
+            return { ...c, notes: (c.notes || []).filter(n => n.id !== noteId) };
+          }
+          return c;
+        }),
+      }))
+    );
+    showToast('笔记已删除');
   };
 
   const renderContent = () => {
@@ -664,6 +999,7 @@ export default function App() {
       case 'dashboard': return <Dashboard setActiveTab={setTab} />;
       case 'courses': return <CourseList courses={coursesData} setSelectedCourse={c => setSelectedCourseId(c.id)} />;
       case 'interview': return <InterviewSim />;
+      case 'settings': return <Settings aiConfig={aiConfig} setAiConfig={setAiConfig} />;
       default: return null;
     }
   };
@@ -680,7 +1016,7 @@ export default function App() {
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full p-4 z-20 flex-shrink-0">
         <div className="flex items-center space-x-3 px-4 py-4 mb-6"><div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">RS</div><span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span></div>
         <nav className="space-y-2 flex-1">
-          {[{ id: 'dashboard', label: '概览 Dashboard', icon: Layers }, { id: 'courses', label: '课程 Courses', icon: BookOpen }, { id: 'interview', label: '模拟 Interview', icon: Award }].map(item => (
+          {[{ id: 'dashboard', label: '概览 Dashboard', icon: Layers }, { id: 'courses', label: '课程 Courses', icon: BookOpen }, { id: 'interview', label: '模拟 Interview', icon: Award }, { id: 'settings', label: '设置 Settings', icon: Sparkles }].map(item => (
             <button key={item.id} onClick={() => setTab(item.id)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}><item.icon className="w-5 h-5" /><span>{item.label}</span></button>
           ))}
         </nav>
@@ -690,7 +1026,7 @@ export default function App() {
         <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center z-30"><div className="flex items-center space-x-3" onClick={() => setTab('dashboard')}><div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">RS</div><span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span></div><Smartphone className="w-5 h-5 text-slate-400" /></header>
         <main className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-8 max-w-7xl mx-auto w-full">{renderContent()}</main>
         <nav className="md:hidden bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-30 pb-safe sm:pb-3">
-          {['dashboard', 'courses', 'interview'].map(t => <button key={t} onClick={() => setTab(t)} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === t ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>{t === 'dashboard' ? <Layers className="w-6 h-6" /> : t === 'courses' ? <BookOpen className="w-6 h-6" /> : <Award className="w-6 h-6" />}<span className="text-[10px] font-bold uppercase">{t}</span></button>)}
+          {['dashboard', 'courses', 'interview', 'settings'].map(t => <button key={t} onClick={() => setTab(t)} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === t ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>{t === 'dashboard' ? <Layers className="w-6 h-6" /> : t === 'courses' ? <BookOpen className="w-6 h-6" /> : t === 'interview' ? <Award className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}<span className="text-[10px] font-bold uppercase">{t}</span></button>)}
         </nav>
       </div>
       
@@ -700,7 +1036,9 @@ export default function App() {
           course={selectedCourse} 
           onClose={() => setSelectedCourseId(null)} 
           onSaveNote={saveNote}
-          onDeleteNote={deleteNote} 
+          onDeleteNote={deleteNote}
+          aiConfig={aiConfig}
+          setTab={setTab}
         />
       )}
     </div>
