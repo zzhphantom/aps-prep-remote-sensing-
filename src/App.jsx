@@ -265,11 +265,14 @@ const LogicNode = ({ node, level = 0, isLast = false, lang = 'cn' }) => {
   };
 
   return (
-    <div className="relative pl-3">
-      {!isLast && level > 0 && <div className="absolute left-0 top-6 bottom-0 w-px bg-slate-200" />}
-      {level > 0 && <div className={`absolute left-0 top-6 w-3 h-px bg-slate-200 ${isLast ? 'w-3' : ''}`} />}
+    <div className="relative">
+      {/* 连接线 - 只在有子节点时显示 */}
+      {hasChildren && level > 0 && (
+        <div className="absolute left-4 top-6 bottom-0 w-px bg-slate-200" />
+      )}
+      
       <div className="mb-4 relative group">
-        <div onClick={() => hasChildren && setIsExpanded(!isExpanded)} className={`relative p-3 rounded-xl border transition-all duration-200 w-full max-w-[90vw] ${level===0?'bg-teal-50 border-teal-200 shadow-sm':'bg-white border-slate-200 hover:border-teal-300 hover:shadow-md'} ${hasChildren?'cursor-pointer':''}`}>
+        <div onClick={() => hasChildren && setIsExpanded(!isExpanded)} className={`relative p-3 rounded-xl border transition-all duration-200 w-full ${level===0?'bg-teal-50 border-teal-200 shadow-sm':'bg-white border-slate-200 hover:border-teal-300 hover:shadow-md'} ${hasChildren?'cursor-pointer':''}`}>
           {node.heavy && <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full z-10 shadow-sm"><Zap className="w-3 h-3 inline mr-0.5" /> Core</div>}
           <div className="flex justify-between items-start">
             <div className="pr-8 flex-1 min-w-0">
@@ -282,7 +285,21 @@ const LogicNode = ({ node, level = 0, isLast = false, lang = 'cn' }) => {
             </div>
           </div>
         </div>
-        {hasChildren && isExpanded && <div className="mt-2">{node.children.map((child, idx) => <LogicNode key={idx} node={child} level={level+1} isLast={idx===node.children.length-1} lang={lang} />)}</div>}
+        
+        {/* 子节点容器 - 垂直布局 */}
+        {hasChildren && isExpanded && (
+          <div className="mt-2 ml-4 sm:ml-6 md:ml-8 space-y-2">
+            {node.children.map((child, idx) => (
+              <LogicNode 
+                key={idx} 
+                node={child} 
+                level={level+1} 
+                isLast={idx===node.children.length-1} 
+                lang={lang} 
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -292,12 +309,12 @@ const LogicTreeContainer = ({ data }) => {
   const [lang, setLang] = useState('cn');
   if (!data?.children) return <div className="p-8 text-center text-slate-400 text-xs border border-dashed rounded-xl">暂无导图</div>;
   return (
-    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 overflow-x-auto">
-      <div className="flex justify-between items-center mb-4 px-1 min-w-[260px]">
+    <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100">
+      <div className="flex justify-between items-center mb-4 px-1">
         <div className="flex items-center text-xs font-bold text-slate-400 uppercase"><Network className="w-3.5 h-3.5 mr-1.5" /> Logic</div>
         <button onClick={() => setLang(l => l==='cn'?'en':'cn')} className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-white border shadow-sm text-xs text-slate-600"><RefreshCw className="w-3.5 h-3.5 mr-1" />{lang==='cn'?'全译':'All'}</button>
       </div>
-      <div className="-ml-1 min-w-max"><LogicNode node={data} level={0} isLast={true} lang={lang} /></div>
+      <div className="w-full"><LogicNode node={data} level={0} isLast={true} lang={lang} /></div>
     </div>
   );
 };
@@ -865,7 +882,7 @@ export default function App() {
 
   const [coursesData, setCoursesData] = useState(() => {
     try {
-      const saved = localStorage.getItem('aps_courses_v8'); // 升级 v8 清除旧缓存
+      const saved = localStorage.getItem('aps_courses_v10'); // 升级 v10 清除旧缓存
       return saved ? JSON.parse(saved) : COURSE_DATA;
     } catch {
       return COURSE_DATA;
@@ -873,7 +890,7 @@ export default function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem('aps_courses_v8', JSON.stringify(coursesData));
+    localStorage.setItem('aps_courses_v10', JSON.stringify(coursesData));
   }, [coursesData]);
 
   // 从 Firestore 加载当前用户的学习笔记并合并到课程数据中
