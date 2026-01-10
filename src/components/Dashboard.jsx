@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, BookOpen, MessageSquare, GraduationCap, RefreshCw, Sparkles, ChevronLeft, ChevronRight, List, History } from 'lucide-react';
+import HighlightText from './ui/HighlightText';
 import { QUOTES } from '../data';
 import CheckinCalendar from './CheckinCalendar';
 import callGemini from '../utils/gemini';
@@ -46,6 +47,16 @@ const InterviewSim = ({ aiConfig }) => {
     const [show, setShow] = useState(false); // 显示答案
     const [loading, setLoading] = useState(false); // AI 生成中
     const [showList, setShowList] = useState(false); // 显示列表视图
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const jumpTo = (i) => {
+        setIdx(i);
+        setShow(false);
+        setShowList(false);
+        setSearchTerm("");
+    };
+
+
 
     const handleNext = async () => {
         // 如果不是最后一题，直接跳下一题
@@ -106,11 +117,7 @@ const InterviewSim = ({ aiConfig }) => {
         }
     };
 
-    const jumpTo = (i) => {
-        setIdx(i);
-        setShow(false);
-        setShowList(false);
-    };
+
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col h-full relative overflow-hidden">
@@ -137,23 +144,59 @@ const InterviewSim = ({ aiConfig }) => {
             {/* List View Overlay */}
             {showList && (
                 <div className="absolute inset-0 top-[70px] bg-white z-20 overflow-y-auto px-6 pb-6 animate-in slide-in-from-right-10">
-                    <h4 className="font-bold text-slate-700 mb-4 flex items-center">
-                        <List className="w-4 h-4 mr-2" /> 历史题库 ({qs.length})
+                    <h4 className="font-bold text-slate-700 mb-4 flex items-center justify-between">
+                        <span className="flex items-center"><List className="w-4 h-4 mr-2" /> 历史题库 ({qs.length})</span>
                     </h4>
+
+                    {/* 搜索框 */}
+                    <div className="relative mb-4">
+                        <input
+                            type="text"
+                            placeholder="搜索问题或答案..."
+                            value={searchTerm}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none"
+                        />
+                    </div>
                     <div className="space-y-3">
-                        {qs.map((item, i) => (
-                            <div
-                                key={i}
-                                onClick={() => jumpTo(i)}
-                                className={`p-4 rounded-xl border cursor-pointer transition-all ${i === idx ? 'border-purple-500 bg-purple-50 shadow-sm' : 'border-slate-100 hover:border-purple-200 hover:bg-slate-50'}`}
-                            >
-                                <div className="flex justify-between mb-1">
-                                    <span className={`text-xs font-bold px-2 py-0.5 rounded ${i === idx ? 'bg-purple-200 text-purple-800' : 'bg-slate-200 text-slate-600'}`}>Q-{i + 1}</span>
-                                </div>
-                                <p className="text-sm font-medium text-slate-800 line-clamp-2">{item.q_en}</p>
-                                <p className="text-xs text-slate-500 line-clamp-1 mt-1">{item.q_cn}</p>
-                            </div>
-                        ))}
+                        <div className="space-y-3">
+                            {qs.map((item, i) => {
+                                const term = searchTerm.toLowerCase();
+                                const matches = item.q_en.toLowerCase().includes(term) ||
+                                    item.q_cn.includes(term) ||
+                                    item.a_en.toLowerCase().includes(term) ||
+                                    item.a_cn.includes(term);
+
+                                if (!matches) return null;
+
+                                return (
+                                    <div
+                                        key={i}
+                                        onClick={() => jumpTo(i)}
+                                        className={`p-4 rounded-xl border cursor-pointer transition-all ${i === idx ? 'border-purple-500 bg-purple-50 shadow-sm' : 'border-slate-100 hover:border-purple-200 hover:bg-slate-50'}`}
+                                    >
+                                        <div className="flex justify-between mb-1">
+                                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${i === idx ? 'bg-purple-200 text-purple-800' : 'bg-slate-200 text-slate-600'}`}>Q-{i + 1}</span>
+                                        </div>
+                                        <p className="text-sm font-medium text-slate-800 line-clamp-2">
+                                            <HighlightText text={item.q_en} highlight={searchTerm} />
+                                        </p>
+                                        <p className="text-xs text-slate-500 line-clamp-1 mt-1">
+                                            <HighlightText text={item.q_cn} highlight={searchTerm} />
+                                        </p>
+                                    </div>
+                                );
+                            })}
+                            {qs.filter(item =>
+                                item.q_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                item.q_cn.includes(searchTerm) ||
+                                item.a_en.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                item.a_cn.includes(searchTerm)
+                            ).length === 0 && (
+                                    <div className="text-center text-slate-400 py-8 text-sm">暂无匹配题目</div>
+                                )}
+                        </div>
                     </div>
                 </div>
             )}

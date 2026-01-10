@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Eye, EyeOff } from 'lucide-react';
 import callGemini from '../utils/gemini';
 
-const Settings = ({ aiConfig, setAiConfig, showToast }) => {
+const Settings = ({ aiConfig, setAiConfig, showToast, onUpdateAllProgress }) => {
     const [tempConfig, setTempConfig] = useState(aiConfig);
     const [showApiKey, setShowApiKey] = useState(false);
 
@@ -45,6 +45,18 @@ const Settings = ({ aiConfig, setAiConfig, showToast }) => {
         } catch (error) {
             alert('API 连接测试失败：' + error.message);
         }
+    };
+
+    const [updatingProgress, setUpdatingProgress] = useState(null); // { current, total }
+
+    const handleUpdateProgressClick = () => {
+        setUpdatingProgress({ current: 0, total: 0 });
+        onUpdateAllProgress((current, total) => {
+            setUpdatingProgress({ current, total });
+            if (current === total) {
+                setTimeout(() => setUpdatingProgress(null), 2000);
+            }
+        });
     };
 
     return (
@@ -142,6 +154,35 @@ const Settings = ({ aiConfig, setAiConfig, showToast }) => {
                         >
                             保存设置
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* 数据维护 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    🛠️ 数据维护
+                </h2>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                    <p className="text-sm text-slate-600 mb-4">
+                        如果你手动修改了笔记或更换了 AI 判断标准，可以使用此功能强制重新评估所有课程的掌握度。
+                    </p>
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                        <button
+                            onClick={handleUpdateProgressClick}
+                            disabled={updatingProgress !== null}
+                            className={`w-full sm:w-auto px-6 py-3 font-bold rounded-xl transition-colors shadow-sm ${updatingProgress !== null ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200'}`}
+                        >
+                            {updatingProgress !== null ? '更新中...' : '🔄 一键更新所有课程进度'}
+                        </button>
+                        {updatingProgress !== null && updatingProgress.total > 0 && (
+                            <div className="flex items-center gap-3 text-sm font-medium text-indigo-700 animate-in fade-in">
+                                <div className="w-32 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                    <div className="h-full bg-indigo-500 transition-all duration-300" style={{ width: `${(updatingProgress.current / updatingProgress.total) * 100}%` }}></div>
+                                </div>
+                                <span>{updatingProgress.current} / {updatingProgress.total}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

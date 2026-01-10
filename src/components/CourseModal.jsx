@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Trash2, StickyNote, X, FileText, Target, Globe, Sparkles, Check, Save } from 'lucide-react';
 import MarkdownRenderer from './ui/MarkdownRenderer';
 import BiText from './ui/BiText';
+import HighlightText from './ui/HighlightText'; // Import HighlightText
 import LogicTreeContainer from './ui/LogicTree';
 import callGemini from '../utils/gemini';
 
@@ -35,7 +36,59 @@ const NoteCard = ({ note, onDelete, onView }) => {
 };
 
 // 2. 笔记阅读弹窗
-const NoteReaderModal = ({ note, onClose }) => {
+const NoteReaderModal = ({ note, onClose, highlightTerm }) => {
+    // 处理高亮闪烁逻辑
+    useEffect(() => {
+        if (!highlightTerm) return;
+
+        // 给Markdown渲染一点时间后再查找DOM
+        const timer = setTimeout(() => {
+            // 使用 TreeWalker 遍历文本节点
+            const contentContainer = document.getElementById('note-content-container');
+            if (!contentContainer) return;
+
+            const treeWalker = document.createTreeWalker(contentContainer, NodeFilter.SHOW_TEXT, null, false);
+            const nodeList = [];
+            let currentNode;
+            while (currentNode = treeWalker.nextNode()) {
+                nodeList.push(currentNode);
+            }
+
+            // 查找包含关键词的节点
+            for (const node of nodeList) {
+                const text = node.nodeValue;
+                const index = text.toLowerCase().indexOf(highlightTerm.toLowerCase());
+                if (index !== -1) {
+                    // 找到了！进行替换和高亮 (简单的DOM操作)
+                    const range = document.createRange();
+                    range.setStart(node, index);
+                    range.setEnd(node, index + highlightTerm.length);
+
+                    const span = document.createElement('span');
+                    span.className = 'bg-yellow-300 text-slate-900 px-0.5 rounded animate-pulse shadow-sm ring-2 ring-yellow-400/50';
+                    span.textContent = text.substring(index, index + highlightTerm.length);
+
+                    // 分割节点
+                    range.deleteContents();
+                    range.insertNode(span);
+
+                    // 滚动到视图
+                    span.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    // 3秒后移除动画效果，只保留基本高亮
+                    setTimeout(() => {
+                        span.className = 'bg-yellow-200 text-slate-800 px-0.5 rounded transition-colors duration-1000';
+                    }, 3000);
+
+                    // 咱们只高亮第一个匹配项，避免过多干扰
+                    break;
+                }
+            }
+        }, 100); // 100ms should be enough for React to render textual content
+
+        return () => clearTimeout(timer);
+    }, [highlightTerm, note]);
+
     if (!note) return null;
     return (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
@@ -48,7 +101,7 @@ const NoteReaderModal = ({ note, onClose }) => {
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 pb-20">
                     <div className="font-bold text-lg text-slate-900 mb-4 border-l-4 border-yellow-400 pl-3 leading-snug">{note.question}</div>
-                    <div className="prose prose-sm max-w-none text-slate-600">
+                    <div id="note-content-container" className="prose prose-sm max-w-none text-slate-600">
                         <MarkdownRenderer content={note.answer} />
                     </div>
                 </div>
@@ -57,13 +110,23 @@ const NoteReaderModal = ({ note, onClose }) => {
     );
 };
 
-const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setTab }) => {
+const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setTab, initialNoteId = null, highlightTerm = null }) => {
     const [aiQuery, setAiQuery] = useState("");
     const [aiResponse, setAiResponse] = useState("");
     const [loading, setLoading] = useState(false);
     const [isSaved, setIsSaved] = useState(false); // 保存状态反馈
     const [viewingNote, setViewingNote] = useState(null); // 当前查看的笔记
     const [isComposing, setIsComposing] = useState(false); // 中文输入法状态
+
+    // Auto-open note if ID is provided
+    useEffect(() => {
+        if (initialNoteId && course.notes) {
+            const targetNote = course.notes.find(n => n.id === initialNoteId);
+            if (targetNote) {
+                setViewingNote(targetNote);
+            }
+        }
+    }, [initialNoteId, course.notes]);
 
     const handleAiAsk = async () => {
         if (!aiQuery.trim()) return;
@@ -100,14 +163,26 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
                 <div className="flex-none p-5 border-b border-slate-100 flex justify-between items-start bg-white z-20">
                     <div className="flex-1 mr-4 min-w-0">
                         <h3 className="font-bold text-lg text-slate-800 leading-snug break-words pr-2">{course.name}</h3>
-                        <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded mt-1.5 inline-block">APS CORE</span>
+                        <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded inline-block">APS CORE</span>
+                            {/* 学习进度条 - 始终显示 */}
+                            <div className="flex items-center gap-2 flex-1 max-w-[200px]">
+                                <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-500 ${course.progress >= 80 ? 'bg-green-500' : course.progress >= 40 ? 'bg-yellow-500' : 'bg-slate-300'}`}
+                                        style={{ width: `${course.progress || 0}%` }}
+                                    ></div>
+                                </div>
+                                <span className="text-[10px] font-bold text-slate-400">{course.progress || 0}%</span>
+                            </div>
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-500 flex-shrink-0"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 space-y-8 pb-24 sm:pb-5">
-                    <BiText label={<><FileText className="w-4 h-4 mr-2" /> 概要 (Summary)</>} cn={<div className="bg-blue-50 text-blue-900 p-4 rounded-xl text-sm leading-relaxed border border-blue-100 shadow-sm">{course.summary.cn}</div>} en={<div className="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100 shadow-sm font-medium">{course.summary.en}</div>} />
-                    <BiText label={<><Target className="w-4 h-4 mr-2" /> 目标 (Goals)</>} cn={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-teal-400 py-1">{course.goals.cn}</p>} en={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-indigo-400 py-1 font-medium">{course.goals.en}</p>} />
-                    <LogicTreeContainer data={course.logicTree} />
+                    <BiText highlightTerm={highlightTerm} label={<><FileText className="w-4 h-4 mr-2" /> 概要 (Summary)</>} cn={<div className="bg-blue-50 text-blue-900 p-4 rounded-xl text-sm leading-relaxed border border-blue-100 shadow-sm">{course.summary.cn}</div>} en={<div className="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100 shadow-sm font-medium">{course.summary.en}</div>} />
+                    <BiText highlightTerm={highlightTerm} label={<><Target className="w-4 h-4 mr-2" /> 目标 (Goals)</>} cn={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-teal-400 py-1">{course.goals.cn}</p>} en={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-indigo-400 py-1 font-medium">{course.goals.en}</p>} />
+                    <LogicTreeContainer data={course.logicTree} highlightTerm={highlightTerm} />
 
                     {course.terms && (
                         <div>
@@ -115,8 +190,8 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {course.terms.map((term, idx) => (
                                     <div key={idx} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative">
-                                        <h5 className="font-bold text-teal-700 text-base mb-2 break-words mr-8">{term.en}</h5>
-                                        <BiText cn={<div className="text-xs text-slate-500 pt-2 border-t border-slate-100"><span className="font-bold">{term.cn}</span>: {term.desc_cn}</div>} en={<div className="text-xs text-slate-600 pt-2 border-t border-slate-100 font-medium"><span className="font-bold">{term.cn}</span>: {term.desc_en}</div>} />
+                                        <h5 className="font-bold text-teal-700 text-base mb-2 break-words mr-8"><HighlightText text={term.en} highlight={highlightTerm} /></h5>
+                                        <BiText highlightTerm={highlightTerm} cn={<div className="text-xs text-slate-500 pt-2 border-t border-slate-100"><span className="font-bold"><HighlightText text={term.cn} highlight={highlightTerm} /></span>: <HighlightText text={term.desc_cn} highlight={highlightTerm} /></div>} en={<div className="text-xs text-slate-600 pt-2 border-t border-slate-100 font-medium"><span className="font-bold"><HighlightText text={term.cn} highlight={highlightTerm} /></span>: <HighlightText text={term.desc_en} highlight={highlightTerm} /></div>} />
                                     </div>
                                 ))}
                             </div>
@@ -190,7 +265,7 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
                     </div>
                 </div>
             </div>
-            {viewingNote && <NoteReaderModal note={viewingNote} onClose={() => setViewingNote(null)} />}
+            {viewingNote && <NoteReaderModal note={viewingNote} onClose={() => setViewingNote(null)} highlightTerm={highlightTerm} />}
         </div>
     );
 };

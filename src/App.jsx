@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Layers, BookOpen, Award, Sparkles, Smartphone } from 'lucide-react';
-import { collection, addDoc, deleteDoc, doc, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, query, where, getDocs, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
+import { calculateCourseProgress } from './utils/aiProgress'; // Import Progress Util
 
 // Import refactored components
 import Dashboard, { InterviewSim } from './components/Dashboard';
@@ -73,6 +74,15 @@ export default function App() {
           ...docSnap.data(),
         }));
 
+        // 加载进度数据
+        const progressSnap = await getDocs(collection(db, 'course_progress'));
+        const progressMap = {};
+        progressSnap.forEach(doc => {
+          if (doc.data().userId === DEMO_USER_ID) {
+            progressMap[doc.data().courseId] = doc.data().percentage;
+          }
+        });
+
         setCoursesData(prev =>
           prev.map(cat => ({
             ...cat,
@@ -98,6 +108,7 @@ export default function App() {
               return {
                 ...course,
                 notes: formatted,
+                progress: progressMap[course.id] || 0 // 合并进度
               };
             }),
           }))
@@ -144,7 +155,50 @@ export default function App() {
           courses: cat.courses.map(c => {
             if (c.id === courseId) {
               const existingNotes = c.notes || [];
-              return { ...c, notes: [newNote, ...existingNotes] };
+              const updatedNotes = [newNote, ...existingNotes];
+
+              // 异步触发进度更新 (即使失败也不阻塞UI)
+              (async () => {
+                try {
+                  // 1. 找到该课程
+                  const currentCourse = coursesData.flatMap(cat => cat.courses).find(co => co.id === courseId);
+                  const goals = currentCourse?.goals?.cn || "";
+                  const name = currentCourse?.name || "";
+                  const currentProgress = c.progress || 0;
+
+                  // 2. 调用 AI 计算新进度
+                  const newProgress = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
+
+                  // 3. 保存进度到 Firestore (允许分数波动，不仅是增加)
+                  if (newProgress !== currentProgress) {
+                    await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${courseId}`), {
+                      userId: DEMO_USER_ID,
+                      courseId,
+                      percentage: newProgress,
+                      lastUpdated: new Date(),
+                      noteCount: updatedNotes.length // Save note count
+                    });
+
+                    // 4. 更新本地状态 (Update UI)
+                    setCoursesData(latest => latest.map(category => ({
+                      ...category,
+                      courses: category.courses.map(co =>
+                        co.id === courseId ? { ...co, progress: newProgress } : co
+                      )
+                    })));
+
+                    if (newProgress > currentProgress) {
+                      showToast(`AI 评估：当前掌握度提升至 ${newProgress}%`);
+                    } else {
+                      showToast(`AI 评估：当前掌握度调整为 ${newProgress}%`);
+                    }
+                  }
+                } catch (err) {
+                  console.error("Auto progress update failed", err);
+                }
+              })();
+
+              return { ...c, notes: updatedNotes };
             }
             return c;
           }),
@@ -174,7 +228,47 @@ export default function App() {
         ...cat,
         courses: cat.courses.map(c => {
           if (c.id === courseId) {
-            return { ...c, notes: (c.notes || []).filter(n => n.id !== noteId) };
+            const updatedNotes = (c.notes || []).filter(n => n.id !== noteId);
+
+            // ⚠️ 删除笔记时触发重算，允许分数下降
+            (async () => {
+              try {
+                const currentCourse = coursesData.flatMap(cat => cat.courses).find(co => co.id === courseId);
+                const goals = currentCourse?.goals?.cn || "";
+                const name = currentCourse?.name || "";
+                const currentProgress = c.progress || 0;
+
+                // AI 重新评分
+                const newProgress = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
+
+                // 这里的关键：如果新分数不同（哪怕降低），也更新
+                if (newProgress !== currentProgress) {
+                  await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${courseId}`), {
+                    userId: DEMO_USER_ID,
+                    courseId,
+                    percentage: newProgress,
+                    lastUpdated: new Date(),
+                    noteCount: updatedNotes.length // Save note count for optimization
+                  });
+
+                  setCoursesData(latest => latest.map(category => ({
+                    ...category,
+                    courses: category.courses.map(co =>
+                      co.id === courseId ? { ...co, progress: newProgress } : co
+                    )
+                  })));
+
+                  // 只有下降时才给提示，让用户知道删笔记会有影响
+                  if (newProgress < currentProgress) {
+                    showToast(`笔记删除，掌握度调整为 ${newProgress}%`);
+                  }
+                }
+              } catch (e) {
+                console.error("Progress recalc on delete failed", e);
+              }
+            })();
+
+            return { ...c, notes: updatedNotes };
           }
           return c;
         }),
@@ -183,12 +277,100 @@ export default function App() {
     showToast('笔记已删除');
   };
 
+  // 一键更新所有课程进度
+  const handleUpdateAllProgress = async (onProgress) => {
+    if (!aiConfig.apiKey) {
+      showToast('❌ 请先配置 API Key');
+      return;
+    }
+
+    if (!window.confirm('这将使用 AI 重新评估所有有笔记的课程进度，可能需要一些时间。\n\n确定要继续吗？')) return;
+
+    showToast('🚀 开始更新所有课程进度...');
+    let updatedCount = 0;
+
+    // 筛选出有笔记的课程
+    const coursesWithNotes = coursesData.flatMap(cat => cat.courses).filter(c => c.notes && c.notes.length > 0);
+    const total = coursesWithNotes.length;
+
+    // 并行限制处理，避免瞬间触发 API Rate Limit
+    // 优化：从course_progress中读取上次评估时的笔记数量，如果数量没变，则跳过
+    const progressSnapshot = await getDocs(collection(db, 'course_progress'));
+    const progressDataMap = {};
+    progressSnapshot.forEach(doc => {
+      if (doc.data().userId === DEMO_USER_ID) {
+        progressDataMap[doc.data().courseId] = doc.data();
+      }
+    });
+
+    for (let i = 0; i < total; i++) {
+      const course = coursesWithNotes[i];
+      const currentNoteCount = course.notes ? course.notes.length : 0;
+      const lastProgressData = progressDataMap[course.id];
+      const lastNoteCount = lastProgressData?.noteCount || 0;
+
+      // 如果笔记数量没变且上次也没报错（默认有lastUpdated说明成功过），则跳过
+      // 注意：这里简单用数量判断。如果用户只是修改了笔记内容但数量没变，这个逻辑会跳过。
+      // 但对于"一键更新"这个耗时操作来说，这是一个合理的trade-off。
+      // 如果用户真的只改了内容想强制刷新，可以建议他们手动触发或者我们加一个"强制刷新"参数。
+      if (lastProgressData && lastNoteCount === currentNoteCount) {
+        if (onProgress) onProgress(i + 1, total);
+        continue; // Skip
+      }
+
+      // 调用回调更新进度 UI
+      if (onProgress) {
+        onProgress(i + 1, total);
+      }
+
+      try {
+        const goals = course.goals?.cn || "";
+        const name = course.name || "";
+        const currentProgress = course.progress || 0;
+
+        const newProgress = await calculateCourseProgress(name, goals, course.notes, currentProgress, aiConfig);
+
+        if (newProgress !== currentProgress) {
+          await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${course.id}`), {
+            userId: DEMO_USER_ID,
+            courseId: course.id,
+            percentage: newProgress,
+            lastUpdated: new Date(),
+            noteCount: course.notes ? course.notes.length : 0 // Save note count for optimization
+          });
+          updatedCount++;
+        }
+      } catch (err) {
+        console.error(`Failed to update progress for ${course.name}:`, err);
+      }
+    }
+
+    if (updatedCount > 0) {
+      showToast(`✅ 更新完成！${updatedCount} 个课程进度已变更。即将刷新...`);
+      setTimeout(() => window.location.reload(), 1500);
+    } else {
+      showToast('✅ 更新完成！所有课程进度暂无变化。');
+    }
+  };
+
+  const [selectedNoteId, setSelectedNoteId] = useState(null);
+  const [highlightTerm, setHighlightTerm] = useState(null); // Highlighting State
+
   const renderContent = () => {
     switch (tab) {
       case 'dashboard': return <Dashboard setActiveTab={setTab} aiConfig={aiConfig} />;
-      case 'courses': return <CourseList courses={coursesData} setSelectedCourse={c => setSelectedCourseId(c.id)} />;
+      case 'courses': return (
+        <CourseList
+          courses={coursesData}
+          setSelectedCourse={(c, noteId, term) => {
+            setSelectedCourseId(c.id);
+            setSelectedNoteId(noteId || null);
+            setHighlightTerm(term || null);
+          }}
+        />
+      );
       case 'interview': return <InterviewSim aiConfig={aiConfig} />;
-      case 'settings': return <Settings aiConfig={aiConfig} setAiConfig={setAiConfig} showToast={showToast} />;
+      case 'settings': return <Settings aiConfig={aiConfig} setAiConfig={setAiConfig} showToast={showToast} onUpdateAllProgress={handleUpdateAllProgress} />;
       default: return null;
     }
   };
@@ -218,11 +400,13 @@ export default function App() {
       {selectedCourse && (
         <CourseModal
           course={selectedCourse}
-          onClose={() => setSelectedCourseId(null)}
+          onClose={() => { setSelectedCourseId(null); setSelectedNoteId(null); setHighlightTerm(null); }}
           onSaveNote={saveNote}
           onDeleteNote={deleteNote}
           aiConfig={aiConfig}
           setTab={setTab}
+          initialNoteId={selectedNoteId}
+          highlightTerm={highlightTerm}
         />
       )}
     </div>
