@@ -104,15 +104,13 @@ const LocalCalendarModal = ({ history, onClose }) => {
                 <div
                   key={i}
                   onClick={() => handleDayClick(day)}
-                  className={`aspect-square flex items-center justify-center rounded-lg cursor-pointer transition-all relative ${
-                    isToday
-                      ? 'border-2 border-teal-500 text-teal-600 font-bold'
-                      : ''
-                  } ${
-                    isChecked
+                  className={`aspect-square flex items-center justify-center rounded-lg cursor-pointer transition-all relative ${isToday
+                    ? 'border-2 border-teal-500 text-teal-600 font-bold'
+                    : ''
+                    } ${isChecked
                       ? 'bg-teal-100 text-teal-800 font-bold'
                       : 'hover:bg-slate-100 text-slate-600'
-                  }`}
+                    }`}
                 >
                   {day}
                   {isChecked && (
@@ -149,7 +147,7 @@ const CheckinCalendar = ({ userId }) => {
 
   const [history, setHistory] = useState({});
   const [streak, setStreak] = useState(0);
-  const [lastCheckIn, setLastCheckIn] = useState(null);
+  const [totalDays, setTotalDays] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // 计算连续打卡天数（从最近一次打卡那天往前连着算）
@@ -170,9 +168,6 @@ const CheckinCalendar = ({ userId }) => {
 
   // 从 Firestore 实时监听打卡记录，构建 history（最近 60 天）
   useEffect(() => {
-    const loadHistory = async () => {
-      if (!userId) return;
-    };
 
     if (!userId) return;
 
@@ -217,11 +212,28 @@ const CheckinCalendar = ({ userId }) => {
         const latestKey = latest ? latest.toDateString() : null;
 
         setHistory(filteredMap);
-        setLastCheckIn(latestKey);
+        setTotalDays(Object.keys(map).length);
         // 只要今天有记录，就认为“今日复盘已完成”
         setChecked(!!filteredMap[new Date().toDateString()]);
-        // streak 从最近一次打卡那天往前连续计算，不要求一定包含今天
-        setStreak(recomputeStreak(filteredMap, latest));
+
+        // 修正 Streak 计算逻辑：如果断签（即最近一次打卡不是今天也不是昨天），则重置为 0
+        if (latest) {
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          const lastDate = new Date(latest);
+          lastDate.setHours(0, 0, 0, 0);
+
+          const diffTime = Math.abs(now - lastDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (diffDays > 1) {
+            setStreak(0);
+          } else {
+            setStreak(recomputeStreak(filteredMap, latest));
+          }
+        } else {
+          setStreak(0);
+        }
         setLoading(false);
       },
       (e) => {
@@ -261,9 +273,9 @@ const CheckinCalendar = ({ userId }) => {
       };
 
       setHistory(newHistory);
+      setTotalDays(prev => prev + 1);
       setReflection('');
       setChecked(true);
-      setLastCheckIn(todayKey);
       setStreak(recomputeStreak(newHistory));
     } catch (e) {
       console.error('添加打卡失败:', e);
@@ -285,7 +297,7 @@ const CheckinCalendar = ({ userId }) => {
             <CalendarDays className="w-3.5 h-3.5 mr-1.5 text-teal-600" /> 日历
           </button>
           <span className="text-xs font-bold bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full border border-teal-100">
-            Day {streak}
+            Day {streak} 🔥 / Total {totalDays}
           </span>
         </div>
       </div>

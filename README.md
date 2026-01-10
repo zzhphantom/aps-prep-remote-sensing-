@@ -1,16 +1,60 @@
-# React + Vite
+# APS Prep - 留德审核部 (APS) 备考助手
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+APS Prep 是一个专为留德审核部 (APS) 面试准备而设计的现代化 Web 应用。它结合了结构化的课程复习、每日打卡和基于 AI 的模拟面试功能，帮助考生高效备考。
 
-Currently, two official plugins are available:
+## ✨ 主要功能 (Features)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   **核心课程复习**: 包含遥感 (Remote Sensing) 与 GIS 等 14 门核心课程的考点梳理。
+    *   **动态内容**: 课程数据存储于云端 (Firestore)，支持实时更新。
+    *   **逻辑导图**: 清晰的知识点 Logic Tree 展示。
+*   **AI 模拟面试 (Interview Simulator)**:
+    *   **Gemini 驱动**: 集成 Google Gemini API，模拟真实考官出题。
+    *   **双语支持**: 题目与答案均提供中英文对照。
+    *   **智能出题**: 支持概念考察及跨学科/跨课程的对比分析。
+    *   **云端题库**: 所有生成的题目自动同步至云端，支持跨设备复习。
+*   **备考打卡 (Check-in System)**:
+    *   可视化打卡日历。
+    *   连续打卡天数 (Streak) 统计与激励。
+    *   累计打卡总天数统计。
+*   **用户设置**:
+    *   支持自定义 API Key。
+    *   多模型切换 (包含最新的 Gemini 3.0 Flash)。
 
-## React Compiler
+## 🛠 技术栈 (Tech Stack)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+*   **前端**: React, Vite, Tailwind CSS
+*   **后端/数据库**: Firebase Firestore
+*   **AI**: Google Gemini API
+*   **图标**: Lucide React
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📅 更新日志 (Changelog)
+
+### v2.0.0 (2026-01-11)
+
+**feat: 重构前端架构，迁移内容至云端，全面升级 AI 面试功能**
+
+#### 主要更新内容：
+
+1.  **前端重构 (Refactoring)**
+    *   将 `App.jsx` 拆分为模块化组件 (`Dashboard`, `CourseList`, `Settings`, `LogicTree` 等)。
+    *   提取通用 Hook (`useFavicon`) 和工具函数，优化代码结构。
+
+2.  **动态内容迁移 (Dynamic Content)**
+    *   将硬编码的课程数据迁移至 **Firebase Firestore**。
+    *   实现 `useCourseData` Hook，支持 **本地缓存 + 实时数据同步**，提升加载速度与灵活性。
+
+3.  **打卡系统增强 (Check-in System)**
+    *   新增 **“累计打卡天数”** 显示 (Total Days)。
+    *   修正连续打卡 (Streak) 计算逻辑：断签超过 1 天自动重置，逻辑更严谨。
+
+4.  **AI 模拟面试升级 (AI Interview Sim)**
+    *   **动态出题**: 集成 Gemini API，点击即生成新题。
+    *   **双语支持**: 全面支持 **中英双语 (Bilingual)** 问题与答案显示。
+    *   **深度考察**: 优化 Prompt，增加对 **概念对比** 和 **课程联系** 类问题的考察。
+    *   **云端同步**: 题目数据 **持久化至 Firestore**，多端实时同步，不再丢失。
+    *   **交互优化**: 新增 **上一题/下一题** 导航、**历史题目列表** 视图，复习更便捷。
+
+5.  **设置 (Settings)**
+    *   新增 **Gemini 3.0 Flash** (Experimental) 模型选项。
