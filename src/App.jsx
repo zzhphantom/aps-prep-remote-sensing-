@@ -79,7 +79,10 @@ export default function App() {
         const progressMap = {};
         progressSnap.forEach(doc => {
           if (doc.data().userId === DEMO_USER_ID) {
-            progressMap[doc.data().courseId] = doc.data().percentage;
+            progressMap[doc.data().courseId] = {
+              percentage: doc.data().percentage,
+              suggestion: doc.data().suggestion || ""
+            };
           }
         });
 
@@ -105,10 +108,13 @@ export default function App() {
                 // 新的在前
                 .sort((a, b) => (a.date < b.date ? 1 : -1));
 
+              const pData = progressMap[course.id] || { percentage: 0, suggestion: "" };
+
               return {
                 ...course,
                 notes: formatted,
-                progress: progressMap[course.id] || 0 // 合并进度
+                progress: pData.percentage, // 合并进度
+                suggestion: pData.suggestion // 合并建议
               };
             }),
           }))
@@ -167,14 +173,16 @@ export default function App() {
                   const currentProgress = c.progress || 0;
 
                   // 2. 调用 AI 计算新进度
-                  const newProgress = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
+                  const { progress: newProgress, suggestion } = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
 
                   // 3. 保存进度到 Firestore (允许分数波动，不仅是增加)
-                  if (newProgress !== currentProgress) {
+                  // 总是更新，因为建议可能变了即使分数没变
+                  if (newProgress !== currentProgress || suggestion) {
                     await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${courseId}`), {
                       userId: DEMO_USER_ID,
                       courseId,
                       percentage: newProgress,
+                      suggestion,
                       lastUpdated: new Date(),
                       noteCount: updatedNotes.length // Save note count
                     });
@@ -183,14 +191,16 @@ export default function App() {
                     setCoursesData(latest => latest.map(category => ({
                       ...category,
                       courses: category.courses.map(co =>
-                        co.id === courseId ? { ...co, progress: newProgress } : co
+                        co.id === courseId ? { ...co, progress: newProgress, suggestion } : co
                       )
                     })));
 
                     if (newProgress > currentProgress) {
                       showToast(`AI 评估：当前掌握度提升至 ${newProgress}%`);
-                    } else {
+                    } else if (newProgress < currentProgress) {
                       showToast(`AI 评估：当前掌握度调整为 ${newProgress}%`);
+                    } else {
+                      // 分数没变但建议更新了，或者只是单纯保存
                     }
                   }
                 } catch (err) {
@@ -239,14 +249,15 @@ export default function App() {
                 const currentProgress = c.progress || 0;
 
                 // AI 重新评分
-                const newProgress = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
+                const { progress: newProgress, suggestion } = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
 
                 // 这里的关键：如果新分数不同（哪怕降低），也更新
-                if (newProgress !== currentProgress) {
+                if (newProgress !== currentProgress || suggestion) {
                   await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${courseId}`), {
                     userId: DEMO_USER_ID,
                     courseId,
                     percentage: newProgress,
+                    suggestion,
                     lastUpdated: new Date(),
                     noteCount: updatedNotes.length // Save note count for optimization
                   });
@@ -254,7 +265,7 @@ export default function App() {
                   setCoursesData(latest => latest.map(category => ({
                     ...category,
                     courses: category.courses.map(co =>
-                      co.id === courseId ? { ...co, progress: newProgress } : co
+                      co.id === courseId ? { ...co, progress: newProgress, suggestion } : co
                     )
                   })));
 
@@ -309,11 +320,10 @@ export default function App() {
       const lastProgressData = progressDataMap[course.id];
       const lastNoteCount = lastProgressData?.noteCount || 0;
 
-      // 如果笔记数量没变且上次也没报错（默认有lastUpdated说明成功过），则跳过
-      // 注意：这里简单用数量判断。如果用户只是修改了笔记内容但数量没变，这个逻辑会跳过。
-      // 但对于"一键更新"这个耗时操作来说，这是一个合理的trade-off。
-      // 如果用户真的只改了内容想强制刷新，可以建议他们手动触发或者我们加一个"强制刷新"参数。
-      if (lastProgressData && lastNoteCount === currentNoteCount) {
+      // 优化：从course_progress中读取上次评估时的笔记数量
+      // 如果笔记数量没变 且 已经有建议(suggestion)，则跳过
+      // 如果没有建议（说明是旧数据或者上次没生成成功），即使笔记没变也要跑一次 AI
+      if (lastProgressData && lastNoteCount === currentNoteCount && lastProgressData.suggestion) {
         if (onProgress) onProgress(i + 1, total);
         continue; // Skip
       }
@@ -328,13 +338,14 @@ export default function App() {
         const name = course.name || "";
         const currentProgress = course.progress || 0;
 
-        const newProgress = await calculateCourseProgress(name, goals, course.notes, currentProgress, aiConfig);
+        const { progress: newProgress, suggestion } = await calculateCourseProgress(name, goals, course.notes, currentProgress, aiConfig);
 
-        if (newProgress !== currentProgress) {
+        if (newProgress !== currentProgress || suggestion) {
           await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${course.id}`), {
             userId: DEMO_USER_ID,
             courseId: course.id,
             percentage: newProgress,
+            suggestion,
             lastUpdated: new Date(),
             noteCount: course.notes ? course.notes.length : 0 // Save note count for optimization
           });

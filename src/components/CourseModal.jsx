@@ -176,6 +176,15 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
                                 <span className="text-[10px] font-bold text-slate-400">{course.progress || 0}%</span>
                             </div>
                         </div>
+                        {course.suggestion && (
+                            <div className="mt-3 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-100 flex items-start animate-in fade-in">
+                                <Sparkles className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-amber-600" />
+                                <div className="flex-1">
+                                    <span className="font-bold block mb-0.5 text-amber-900">下一步建议：</span>
+                                    {course.suggestion}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-500 flex-shrink-0"><X className="w-5 h-5" /></button>
                 </div>
@@ -266,7 +275,7 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
                 </div>
             </div>
             {viewingNote && <NoteReaderModal note={viewingNote} onClose={() => setViewingNote(null)} highlightTerm={highlightTerm} />}
-        </div>
+        </div >
     );
 };
 
