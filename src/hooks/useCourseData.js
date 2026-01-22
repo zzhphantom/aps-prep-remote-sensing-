@@ -4,7 +4,7 @@ import { db } from '../firebase';
 import { COURSE_DATA } from '../data';
 
 // 缓存 Key
-const CACHE_KEY = 'aps_course_data_v2';
+const CACHE_KEY = 'aps_course_data_v5';
 const CACHE_TIME_KEY = 'aps_course_data_time';
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24小时缓存
 

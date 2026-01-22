@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Eye, EyeOff } from 'lucide-react';
 import callGemini from '../utils/gemini';
+import { migrateDataToFirestore } from '../utils/migrateData';
 
 const Settings = ({ aiConfig, setAiConfig, showToast, onUpdateAllProgress }) => {
     const [tempConfig, setTempConfig] = useState(aiConfig);
@@ -44,6 +45,27 @@ const Settings = ({ aiConfig, setAiConfig, showToast, onUpdateAllProgress }) => 
             }
         } catch (error) {
             alert('API 连接测试失败：' + error.message);
+        }
+    };
+
+    const [migrating, setMigrating] = useState(false);
+
+    const handleMigrateData = async () => {
+        if (!window.confirm('确定要将本地数据同步到云端吗？这将覆盖云端现有的课程配置。\\n\\nConfirm to sync local data to cloud? This will overwrite existing course configurations.')) return;
+
+        setMigrating(true);
+        try {
+            const result = await migrateDataToFirestore();
+            if (result.success) {
+                showToast('✅ 数据已同步到云端！Data synced to cloud.');
+            } else {
+                alert('同步失败 Sync failed: ' + result.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('同步出错 Sync error');
+        } finally {
+            setMigrating(false);
         }
     };
 
@@ -183,6 +205,19 @@ const Settings = ({ aiConfig, setAiConfig, showToast, onUpdateAllProgress }) => 
                                 <span>{updatingProgress.current} / {updatingProgress.total}</span>
                             </div>
                         )}
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-slate-200">
+                        <p className="text-sm text-slate-600 mb-4">
+                            如果你在代码中添加了新课程，点此同步到云端数据库。
+                        </p>
+                        <button
+                            onClick={handleMigrateData}
+                            disabled={migrating}
+                            className={`w-full sm:w-auto px-6 py-3 font-bold rounded-xl transition-colors shadow-sm ${migrating ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-slate-600 hover:bg-slate-700 text-white shadow-slate-200'}`}
+                        >
+                            {migrating ? '同步中 Syncing...' : '☁️ 同步本地数据到云端 (Sync Data)'}
+                        </button>
                     </div>
                 </div>
             </div>
