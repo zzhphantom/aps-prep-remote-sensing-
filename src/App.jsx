@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, BookOpen, Award, Sparkles, Smartphone } from 'lucide-react';
+import { Layers, BookOpen, Award, Sparkles, Smartphone, Network, GraduationCap } from 'lucide-react';
 import { collection, addDoc, deleteDoc, doc, query, where, getDocs, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
-import { calculateCourseProgress } from './utils/aiProgress'; // Import Progress Util
+import { calculateCourseProgress } from './utils/aiProgress';
 
-// Import refactored components
+// Import components
 import Dashboard, { InterviewSim } from './components/Dashboard';
 import CourseList from './components/CourseList';
 import Settings from './components/Settings';
 import CourseModal from './components/CourseModal';
+import KnowledgeGraph from './components/KnowledgeGraph';
+import ThesisReview from './components/ThesisReview';
 import Toast from './components/ui/Toast';
 import useFavicon from './hooks/useFavicon';
 import { useCourseData } from './hooks/useCourseData';
@@ -18,9 +20,10 @@ const DEMO_USER_ID = 'demo-user-1';
 export default function App() {
   const [tab, setTab] = useState('dashboard');
   const [selectedCourseId, setSelectedCourseId] = useState(null);
+  const [history, setHistory] = useState([]); // Navigation history stack
   const [toast, setToast] = useState(null);
 
-  // AI 配置状态
+  // AI Config State
   const [aiConfig, setAiConfig] = useState(() => {
     try {
       const saved = localStorage.getItem('ai_config');
@@ -38,43 +41,35 @@ export default function App() {
     }
   });
 
-  // 保存 AI 配置到 localStorage
   useEffect(() => {
     localStorage.setItem('ai_config', JSON.stringify(aiConfig));
   }, [aiConfig]);
 
   useFavicon();
 
-  // 1. 获取基础课程数据 (本地或云端)
+  // 1. Get base course data
   const { data: baseCoursesData } = useCourseData();
-
-  // 2. 本地状态维护最终的课程数据 (合并了笔记的)
   const [coursesData, setCoursesData] = useState([]);
 
-  // 当基础数据变化时，初始化
   useEffect(() => {
     if (baseCoursesData) {
       setCoursesData(baseCoursesData);
     }
   }, [baseCoursesData]);
 
-  // 3. 从 Firestore 加载当前用户的学习笔记并合并到课程数据中
+  // 2. Load Firestore notes and merge
   useEffect(() => {
     const loadNotesFromFirestore = async () => {
       if (!baseCoursesData || baseCoursesData.length === 0) return;
 
       try {
-        const q = query(
-          collection(db, 'notes'),
-          where('userId', '==', DEMO_USER_ID)
-        );
+        const q = query(collection(db, 'notes'), where('userId', '==', DEMO_USER_ID));
         const snapshot = await getDocs(q);
         const remoteNotes = snapshot.docs.map(docSnap => ({
           id: docSnap.id,
           ...docSnap.data(),
         }));
 
-        // 加载进度数据
         const progressSnap = await getDocs(collection(db, 'course_progress'));
         const progressMap = {};
         progressSnap.forEach(doc => {
@@ -90,10 +85,7 @@ export default function App() {
           prev.map(cat => ({
             ...cat,
             courses: cat.courses.map(course => {
-              const notesForCourse = remoteNotes.filter(
-                n => n.courseId === course.id
-              );
-              // 如果没有笔记，保留原course
+              const notesForCourse = remoteNotes.filter(n => n.courseId === course.id);
               if (!notesForCourse.length) return course;
 
               const formatted = notesForCourse
@@ -105,7 +97,6 @@ export default function App() {
                     ? new Date(n.createdAt.seconds * 1000).toLocaleDateString()
                     : new Date().toLocaleDateString(),
                 }))
-                // 新的在前
                 .sort((a, b) => (a.date < b.date ? 1 : -1));
 
               const pData = progressMap[course.id] || { percentage: 0, suggestion: "" };
@@ -113,8 +104,8 @@ export default function App() {
               return {
                 ...course,
                 notes: formatted,
-                progress: pData.percentage, // 合并进度
-                suggestion: pData.suggestion // 合并建议
+                progress: pData.percentage,
+                suggestion: pData.suggestion
               };
             }),
           }))
@@ -125,9 +116,8 @@ export default function App() {
     };
 
     loadNotesFromFirestore();
-  }, [baseCoursesData]); // 依赖 baseCoursesData，确保由于动态加载滞后时能重新合并
+  }, [baseCoursesData]);
 
-  // 根据 ID 实时计算当前选中的课程对象 (Derived State)
   const selectedCourse = selectedCourseId
     ? coursesData.flatMap(c => c.courses).find(c => c.id === selectedCourseId)
     : null;
@@ -163,20 +153,15 @@ export default function App() {
               const existingNotes = c.notes || [];
               const updatedNotes = [newNote, ...existingNotes];
 
-              // 异步触发进度更新 (即使失败也不阻塞UI)
               (async () => {
                 try {
-                  // 1. 找到该课程
                   const currentCourse = coursesData.flatMap(cat => cat.courses).find(co => co.id === courseId);
                   const goals = currentCourse?.goals?.cn || "";
                   const name = currentCourse?.name || "";
                   const currentProgress = c.progress || 0;
 
-                  // 2. 调用 AI 计算新进度
                   const { progress: newProgress, suggestion } = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
 
-                  // 3. 保存进度到 Firestore (允许分数波动，不仅是增加)
-                  // 总是更新，因为建议可能变了即使分数没变
                   if (newProgress !== currentProgress || suggestion) {
                     await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${courseId}`), {
                       userId: DEMO_USER_ID,
@@ -184,10 +169,9 @@ export default function App() {
                       percentage: newProgress,
                       suggestion,
                       lastUpdated: new Date(),
-                      noteCount: updatedNotes.length // Save note count
+                      noteCount: updatedNotes.length
                     });
 
-                    // 4. 更新本地状态 (Update UI)
                     setCoursesData(latest => latest.map(category => ({
                       ...category,
                       courses: category.courses.map(co =>
@@ -199,8 +183,6 @@ export default function App() {
                       showToast(`AI 评估：当前掌握度提升至 ${newProgress}%`);
                     } else if (newProgress < currentProgress) {
                       showToast(`AI 评估：当前掌握度调整为 ${newProgress}%`);
-                    } else {
-                      // 分数没变但建议更新了，或者只是单纯保存
                     }
                   }
                 } catch (err) {
@@ -222,15 +204,13 @@ export default function App() {
     }
   };
 
-  // 删除本地 & Firestore 中的学习笔记
   const deleteNote = async (courseId, noteId) => {
     if (!window.confirm('确定要删除这条笔记吗？')) return;
 
     try {
       await deleteDoc(doc(db, 'notes', noteId));
     } catch (e) {
-      // 如果是本地初始化示例笔记（没有对应云端文档），忽略删除错误
-      console.warn('删除 Firestore 笔记时出现问题（可忽略示例数据）:', e);
+      console.warn('删除 Firestore 笔记时出现问题:', e);
     }
 
     setCoursesData(prevData =>
@@ -240,7 +220,6 @@ export default function App() {
           if (c.id === courseId) {
             const updatedNotes = (c.notes || []).filter(n => n.id !== noteId);
 
-            // ⚠️ 删除笔记时触发重算，允许分数下降
             (async () => {
               try {
                 const currentCourse = coursesData.flatMap(cat => cat.courses).find(co => co.id === courseId);
@@ -248,10 +227,8 @@ export default function App() {
                 const name = currentCourse?.name || "";
                 const currentProgress = c.progress || 0;
 
-                // AI 重新评分
                 const { progress: newProgress, suggestion } = await calculateCourseProgress(name, goals, updatedNotes, currentProgress, aiConfig);
 
-                // 这里的关键：如果新分数不同（哪怕降低），也更新
                 if (newProgress !== currentProgress || suggestion) {
                   await setDoc(doc(db, 'course_progress', `${DEMO_USER_ID}_${courseId}`), {
                     userId: DEMO_USER_ID,
@@ -259,7 +236,7 @@ export default function App() {
                     percentage: newProgress,
                     suggestion,
                     lastUpdated: new Date(),
-                    noteCount: updatedNotes.length // Save note count for optimization
+                    noteCount: updatedNotes.length
                   });
 
                   setCoursesData(latest => latest.map(category => ({
@@ -269,7 +246,6 @@ export default function App() {
                     )
                   })));
 
-                  // 只有下降时才给提示，让用户知道删笔记会有影响
                   if (newProgress < currentProgress) {
                     showToast(`笔记删除，掌握度调整为 ${newProgress}%`);
                   }
@@ -288,7 +264,6 @@ export default function App() {
     showToast('笔记已删除');
   };
 
-  // 一键更新所有课程进度
   const handleUpdateAllProgress = async (onProgress) => {
     if (!aiConfig.apiKey) {
       showToast('❌ 请先配置 API Key');
@@ -300,12 +275,9 @@ export default function App() {
     showToast('🚀 开始更新所有课程进度...');
     let updatedCount = 0;
 
-    // 筛选出有笔记的课程
     const coursesWithNotes = coursesData.flatMap(cat => cat.courses).filter(c => c.notes && c.notes.length > 0);
     const total = coursesWithNotes.length;
 
-    // 并行限制处理，避免瞬间触发 API Rate Limit
-    // 优化：从course_progress中读取上次评估时的笔记数量，如果数量没变，则跳过
     const progressSnapshot = await getDocs(collection(db, 'course_progress'));
     const progressDataMap = {};
     progressSnapshot.forEach(doc => {
@@ -320,18 +292,12 @@ export default function App() {
       const lastProgressData = progressDataMap[course.id];
       const lastNoteCount = lastProgressData?.noteCount || 0;
 
-      // 优化：从course_progress中读取上次评估时的笔记数量
-      // 如果笔记数量没变 且 已经有建议(suggestion)，则跳过
-      // 如果没有建议（说明是旧数据或者上次没生成成功），即使笔记没变也要跑一次 AI
       if (lastProgressData && lastNoteCount === currentNoteCount && lastProgressData.suggestion) {
         if (onProgress) onProgress(i + 1, total);
-        continue; // Skip
+        continue;
       }
 
-      // 调用回调更新进度 UI
-      if (onProgress) {
-        onProgress(i + 1, total);
-      }
+      if (onProgress) onProgress(i + 1, total);
 
       try {
         const goals = course.goals?.cn || "";
@@ -347,7 +313,7 @@ export default function App() {
             percentage: newProgress,
             suggestion,
             lastUpdated: new Date(),
-            noteCount: course.notes ? course.notes.length : 0 // Save note count for optimization
+            noteCount: course.notes ? course.notes.length : 0
           });
           updatedCount++;
         }
@@ -365,7 +331,7 @@ export default function App() {
   };
 
   const [selectedNoteId, setSelectedNoteId] = useState(null);
-  const [highlightTerm, setHighlightTerm] = useState(null); // Highlighting State
+  const [highlightTerm, setHighlightTerm] = useState(null);
 
   const renderContent = () => {
     switch (tab) {
@@ -375,11 +341,20 @@ export default function App() {
           courses={coursesData}
           setSelectedCourse={(c, noteId, term) => {
             setSelectedCourseId(c.id);
+            setHistory([]); // Reset history on new selection from list
             setSelectedNoteId(noteId || null);
             setHighlightTerm(term || null);
           }}
         />
       );
+      case 'graph': return <KnowledgeGraph
+        onCourseClick={(courseId) => {
+          setSelectedCourseId(courseId);
+          setSelectedNoteId(null);
+          setHighlightTerm(null);
+        }}
+      />;
+      case 'thesis': return <ThesisReview />;
       case 'interview': return <InterviewSim aiConfig={aiConfig} />;
       case 'settings': return <Settings aiConfig={aiConfig} setAiConfig={setAiConfig} showToast={showToast} onUpdateAllProgress={handleUpdateAllProgress} />;
       default: return null;
@@ -391,29 +366,79 @@ export default function App() {
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
       <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full p-4 z-20 flex-shrink-0">
-        <div className="flex items-center space-x-3 px-4 py-4 mb-6"><div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">RS</div><span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span></div>
+        <div className="flex items-center space-x-3 px-4 py-4 mb-6">
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">RS</div>
+          <span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span>
+        </div>
         <nav className="space-y-2 flex-1">
-          {[{ id: 'dashboard', label: '概览 Dashboard', icon: Layers }, { id: 'courses', label: '课程 Courses', icon: BookOpen }, { id: 'interview', label: '模拟 Interview', icon: Award }, { id: 'settings', label: '设置 Settings', icon: Sparkles }].map(item => (
-            <button key={item.id} onClick={() => setTab(item.id)} className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}><item.icon className="w-5 h-5" /><span>{item.label}</span></button>
+          {[
+            { id: 'dashboard', label: '概览 Dashboard', icon: Layers },
+            { id: 'courses', label: '课程 Courses', icon: BookOpen },
+            { id: 'graph', label: '图谱 Graph', icon: Network },
+            { id: 'thesis', label: '毕业论文 Thesis', icon: GraduationCap },
+            { id: 'interview', label: '模拟 Interview', icon: Award },
+            { id: 'settings', label: '设置 Settings', icon: Sparkles }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setTab(item.id)}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span>{item.label}</span>
+            </button>
           ))}
         </nav>
-        <div className="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 px-4">APS Prep Assistant v2.6</div>
+        <div className="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 px-4">APS Prep Assistant v2.9</div>
       </aside>
+
       <div className="flex-1 flex flex-col h-full relative min-w-0">
-        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center z-30"><div className="flex items-center space-x-3" onClick={() => setTab('dashboard')}><div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">RS</div><span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span></div><Smartphone className="w-5 h-5 text-slate-400" /></header>
-        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-8 max-w-7xl mx-auto w-full">{renderContent()}</main>
+        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex justify-between items-center z-30">
+          <div className="flex items-center space-x-3" onClick={() => setTab('dashboard')}>
+            <div className="w-9 h-9 bg-gradient-to-br from-teal-500 to-teal-700 rounded-xl flex items-center justify-center text-white font-bold shadow-sm">RS</div>
+            <span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span>
+          </div>
+          <Smartphone className="w-5 h-5 text-slate-400" />
+        </header>
+
+        <main className="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-8 max-w-7xl mx-auto w-full">
+          {renderContent()}
+        </main>
+
         <nav className="md:hidden bg-white border-t border-slate-200 px-6 py-3 flex justify-between items-center z-30 pb-safe sm:pb-3">
-          {['dashboard', 'courses', 'interview', 'settings'].map(t => <button key={t} onClick={() => setTab(t)} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === t ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>{t === 'dashboard' ? <Layers className="w-6 h-6" /> : t === 'courses' ? <BookOpen className="w-6 h-6" /> : t === 'interview' ? <Award className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}<span className="text-[10px] font-bold uppercase">{t}</span></button>)}
+          {['dashboard', 'courses', 'graph', 'thesis', 'settings'].map(t => (
+            <button key={t} onClick={() => setTab(t)} className={`flex flex-col items-center w-16 space-y-1.5 ${tab === t ? 'text-teal-600 scale-105' : 'text-slate-400'}`}>
+              {t === 'dashboard' ? <Layers className="w-6 h-6" /> :
+                t === 'courses' ? <BookOpen className="w-6 h-6" /> :
+                  t === 'graph' ? <Network className="w-6 h-6" /> :
+                    t === 'thesis' ? <GraduationCap className="w-6 h-6" /> :
+                      t === 'interview' ? <Award className="w-6 h-6" /> :
+                        <Sparkles className="w-6 h-6" />}
+              <span className="text-[10px] font-bold uppercase">{t}</span>
+            </button>
+          ))}
         </nav>
       </div>
 
-      {/* 始终渲染 Modal，通过 selectedCourseId 控制显示内容 */}
       {selectedCourse && (
         <CourseModal
           course={selectedCourse}
-          onClose={() => { setSelectedCourseId(null); setSelectedNoteId(null); setHighlightTerm(null); }}
+          onClose={() => { setSelectedCourseId(null); setSelectedNoteId(null); setHighlightTerm(null); setHistory([]); }}
           onSaveNote={saveNote}
           onDeleteNote={deleteNote}
+          // Navigation Props
+          onNavigate={(targetId) => {
+            if (targetId === selectedCourseId) return;
+            setHistory(prev => [...prev, selectedCourseId]);
+            setSelectedCourseId(targetId);
+          }}
+          onBack={() => {
+            if (history.length === 0) return;
+            const prevId = history[history.length - 1];
+            setHistory(prev => prev.slice(0, -1));
+            setSelectedCourseId(prevId);
+          }}
+          canGoBack={history.length > 0}
           aiConfig={aiConfig}
           setTab={setTab}
           initialNoteId={selectedNoteId}

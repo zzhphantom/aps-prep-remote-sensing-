@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, BookOpen, MessageSquare, GraduationCap, RefreshCw, Sparkles, ChevronLeft, ChevronRight, List, History } from 'lucide-react';
+import { Layers, BookOpen, MessageSquare, GraduationCap, RefreshCw, Sparkles, ChevronLeft, ChevronRight, List, History, Trash2 } from 'lucide-react';
 import HighlightText from './ui/HighlightText';
-import { QUOTES } from '../data';
+import { QUOTES, COURSE_DATA } from '../data';
 import CheckinCalendar from './CheckinCalendar';
 import callGemini from '../utils/gemini';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase';
 
 const DEMO_USER_ID = 'demo-user-1';
@@ -33,7 +33,7 @@ const InterviewSim = ({ aiConfig }) => {
     useEffect(() => {
         const q = query(collection(db, 'interview_questions'), orderBy('createdAt', 'asc'));
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetched = snapshot.docs.map(doc => doc.data());
+            const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setCloudQs(fetched);
             // 合并：内置在前，云端在后
             setQs([...defaultQs, ...fetched]);
@@ -58,6 +58,32 @@ const InterviewSim = ({ aiConfig }) => {
 
 
 
+    const handleDeleteById = async (e, id) => {
+        e.stopPropagation();
+        if (!window.confirm("确定要删除这道题目吗？")) return;
+
+        try {
+            await deleteDoc(doc(db, 'interview_questions', id));
+            // Ensure index is valid after deletion
+            if (idx >= qs.length - 2) {
+                setIdx(Math.max(0, idx - 1));
+            }
+        } catch (err) {
+            console.error("删除失败:", err);
+            alert("删除失败");
+        }
+    };
+
+    const handleDelete = async (e) => {
+        e.stopPropagation();
+        const currentQ = qs[idx];
+        if (!currentQ.id) {
+            alert("内置题目不可删除");
+            return;
+        }
+        await handleDeleteById(e, currentQ.id);
+    };
+
     const handleNext = async () => {
         // 如果不是最后一题，直接跳下一题
         if (idx < qs.length - 1) {
@@ -76,7 +102,32 @@ const InterviewSim = ({ aiConfig }) => {
         setShow(false);
 
         try {
-            const prompt = "你是APS审核官。请生成一道关于遥感(Remote Sensing)或GIS的简短面试题。题目类型可以灵活多样，包括具体概念考察，或者不同概念/课程之间的区别与联系（例如：光学与雷达的区别、GIS与RS的关联等）。要求包含中英文对照的问题和答案。请严格按以下JSON格式返回：{\"q_en\": \"English Question\", \"q_cn\": \"中文问题\", \"a_en\": \"English Answer\", \"a_cn\": \"中文答案\"}。不要包含其他文字。";
+            // 1. 随机选择一门课程作为出题背景
+            // 1. 筛选出 "核心理论 (Core Theory)" 类别的课程
+            const coreCategory = COURSE_DATA.find(cat => cat.category.includes("Core Theory"));
+            const targetCourses = coreCategory ? coreCategory.courses : COURSE_DATA.flatMap(c => c.courses);
+
+            const randomCourse = targetCourses[Math.floor(Math.random() * targetCourses.length)];
+
+            // 2. 随机选择一种出题角度
+            const angles = [
+                "概念辨析 (Concept Comparison)",
+                "实际应用 (Practical Application)",
+                "核心理论 (Core Theory)",
+                "跨学科联系 (Interdisciplinary Connection)"
+            ];
+            const randomAngle = angles[Math.floor(Math.random() * angles.length)];
+
+            // 3. 构建动态 Prompt
+            const prompt = `你是APS审核官。请针对课程《${randomCourse.name}》生成一道简短面试题。
+            出题角度：${randomAngle}。
+            题目要求：
+            1. 如果是对比题，可以涉及该课程与其他课程的联系。
+            2. 必须包含中英文对照的问题和答案。
+            3. 问题要具体，不要太宽泛。
+            
+            请严格按以下JSON格式返回：{"q_en": "English Question", "q_cn": "中文问题", "a_en": "English Answer", "a_cn": "中文答案"}。不要包含其他文字。`;
+
             const res = await callGemini(prompt, aiConfig);
 
             // 尝试解析 JSON
@@ -87,19 +138,10 @@ const InterviewSim = ({ aiConfig }) => {
             await addDoc(collection(db, 'interview_questions'), {
                 ...newQ,
                 createdAt: serverTimestamp(),
-                userId: DEMO_USER_ID // 可选：标记是谁生成的
+                userId: DEMO_USER_ID,
+                sourceCourse: randomCourse.name // 记录来源
             });
 
-            // 下方逻辑由 onSnapshot 自动处理更新 UI
-            // 我们只需要切换到下一题（稍微延迟一下等待同步？）
-            // 由于 onSnapshot 是异步的，我们可以先临时手动加进去提升体验，或者 trusting the cloud speed.
-            // 为了最顺滑体验，我们可以在这里手动 setIdx(idx + 1) 
-            // 但如果 snapshot 快，idx 可能会越界？
-            // 简单做法：等待 snapshot 更新后，如果 idx 指向的是旧的最后一位，需要让用户再点一次吗？
-            // 不，我们通过监听 qs 的长度变化来自动跳转？
-            // 或者：直接在这里临时 setQs，等 snapshot 覆盖。
-
-            // 简单且稳健的做法：
             setIdx(idx + 1);
 
         } catch (e) {
@@ -128,6 +170,15 @@ const InterviewSim = ({ aiConfig }) => {
                     {loading ? "AI 出题中..." : "模拟面试"}
                 </h3>
                 <div className="flex items-center gap-2">
+                    {qs[idx].id && (
+                        <button
+                            onClick={handleDelete}
+                            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            title="删除此题"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
                     <span className="text-xs font-mono font-bold bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100">
                         {idx + 1} / {qs.length}
                     </span>
@@ -178,6 +229,15 @@ const InterviewSim = ({ aiConfig }) => {
                                     >
                                         <div className="flex justify-between mb-1">
                                             <span className={`text-xs font-bold px-2 py-0.5 rounded ${i === idx ? 'bg-purple-200 text-purple-800' : 'bg-slate-200 text-slate-600'}`}>Q-{i + 1}</span>
+                                            {item.id && (
+                                                <button
+                                                    onClick={(e) => handleDeleteById(e, item.id)}
+                                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50 p-1 rounded transition-colors"
+                                                    title="删除"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            )}
                                         </div>
                                         <p className="text-sm font-medium text-slate-800 line-clamp-2">
                                             <HighlightText text={item.q_en} highlight={searchTerm} />
@@ -267,6 +327,8 @@ const InterviewSim = ({ aiConfig }) => {
                     {idx === qs.length - 1 ? <><Sparkles className="w-4 h-4 text-yellow-400" /> AI 生成</> : <>下一题 <ChevronRight className="w-4 h-4" /></>}
                 </button>
             </div>
+
+
         </div>
     );
 };

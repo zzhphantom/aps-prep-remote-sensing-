@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Trash2, StickyNote, X, FileText, Target, Globe, Sparkles, Check, Save } from 'lucide-react';
+import { Calendar, Trash2, StickyNote, X, FileText, Target, Globe, Sparkles, Check, Save, ChevronRight, ChevronLeft, Network } from 'lucide-react';
 import MarkdownRenderer from './ui/MarkdownRenderer';
 import BiText from './ui/BiText';
 import HighlightText from './ui/HighlightText'; // Import HighlightText
@@ -110,7 +110,7 @@ const NoteReaderModal = ({ note, onClose, highlightTerm }) => {
     );
 };
 
-const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setTab, initialNoteId = null, highlightTerm = null }) => {
+const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setTab, initialNoteId = null, highlightTerm = null, onNavigate, onBack, canGoBack }) => {
     const [aiQuery, setAiQuery] = useState("");
     const [aiResponse, setAiResponse] = useState("");
     const [loading, setLoading] = useState(false);
@@ -161,23 +161,38 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 animate-in fade-in backdrop-blur-sm">
             <div className="bg-white w-full h-[90vh] sm:h-auto sm:max-h-[85vh] sm:max-w-3xl rounded-2xl flex flex-col shadow-2xl overflow-hidden min-w-0">
                 <div className="flex-none p-5 border-b border-slate-100 flex justify-between items-start bg-white z-20">
-                    <div className="flex-1 mr-4 min-w-0">
-                        <h3 className="font-bold text-lg text-slate-800 leading-snug break-words pr-2">{course.name}</h3>
-                        <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded inline-block">APS CORE</span>
-                            {/* 学习进度条 - 始终显示 */}
-                            <div className="flex items-center gap-2 flex-1 max-w-[200px]">
-                                <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full transition-all duration-500 ${course.progress >= 80 ? 'bg-green-500' : course.progress >= 40 ? 'bg-yellow-500' : 'bg-slate-300'}`}
-                                        style={{ width: `${course.progress || 0}%` }}
-                                    ></div>
+                    <div className="flex-1 mr-4 min-w-0 pr-8"> {/* Added padding-right to avoid overlap with close button */}
+                        {/* Header Row: Back Button + Title */}
+                        <div className="flex items-start gap-3">
+                            {canGoBack && (
+                                <button
+                                    onClick={onBack}
+                                    className="mt-1 p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors flex-shrink-0"
+                                    title="返回上一门课程"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                            )}
+                            <div>
+                                <h3 className="font-bold text-lg text-slate-800 leading-snug break-words">{course.name}</h3>
+                                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                    <span className="text-[10px] font-mono font-bold text-teal-700 bg-teal-50 border border-teal-100 px-2 py-0.5 rounded inline-block">APS CORE</span>
+                                    {/* 学习进度条 */}
+                                    <div className="flex items-center gap-2 flex-1 min-w-[120px] max-w-[200px]">
+                                        <div className="flex-1 bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${course.progress >= 80 ? 'bg-green-500' : course.progress >= 40 ? 'bg-yellow-500' : 'bg-slate-300'}`}
+                                                style={{ width: `${course.progress || 0}%` }}
+                                            ></div>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-400">{course.progress || 0}%</span>
+                                    </div>
                                 </div>
-                                <span className="text-[10px] font-bold text-slate-400">{course.progress || 0}%</span>
                             </div>
                         </div>
+
                         {course.suggestion && (
-                            <div className="mt-3 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-100 flex items-start animate-in fade-in">
+                            <div className="mt-3 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-100 flex items-start animate-in fade-in ml-9"> {/* Indented to align with title */}
                                 <Sparkles className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-amber-600" />
                                 <div className="flex-1">
                                     <span className="font-bold block mb-0.5 text-amber-900">下一步建议：</span>
@@ -186,12 +201,36 @@ const CourseModal = ({ course, onClose, onSaveNote, onDeleteNote, aiConfig, setT
                             </div>
                         )}
                     </div>
-                    <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-500 flex-shrink-0"><X className="w-5 h-5" /></button>
+                    <button onClick={onClose} className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full transition-colors text-slate-500 flex-shrink-0 absolute top-4 right-4"><X className="w-5 h-5" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-5 space-y-8 pb-24 sm:pb-5">
                     <BiText highlightTerm={highlightTerm} label={<><FileText className="w-4 h-4 mr-2" /> 概要 (Summary)</>} cn={<div className="bg-blue-50 text-blue-900 p-4 rounded-xl text-sm leading-relaxed border border-blue-100 shadow-sm">{course.summary.cn}</div>} en={<div className="bg-indigo-50 text-indigo-900 p-4 rounded-xl text-sm leading-relaxed border border-indigo-100 shadow-sm font-medium">{course.summary.en}</div>} />
                     <BiText highlightTerm={highlightTerm} label={<><Target className="w-4 h-4 mr-2" /> 目标 (Goals)</>} cn={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-teal-400 py-1">{course.goals.cn}</p>} en={<p className="text-slate-700 text-sm leading-relaxed pl-3 border-l-4 border-indigo-400 py-1 font-medium">{course.goals.en}</p>} />
                     <LogicTreeContainer data={course.logicTree} highlightTerm={highlightTerm} />
+
+                    {/* 知识图谱关联 (New) */}
+                    {course.relations && course.relations.length > 0 && (
+                        <div>
+                            <h4 className="flex items-center text-sm font-bold text-slate-500 uppercase tracking-wider mb-4"><Network className="w-4 h-4 mr-2" /> 知识关联 (Relations)</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {course.relations.map((rel, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={() => onNavigate && onNavigate(rel.targetId)}
+                                        className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-teal-400 hover:shadow-md transition-all group active:scale-[0.98]"
+                                        title={`跳转到: ${rel.targetName}`}
+                                    >
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 group-hover:bg-teal-50 group-hover:text-teal-700 transition-colors uppercase">{rel.label || '关联'}</span>
+                                            <ChevronRight className="w-3 h-3 text-slate-300 group-hover:text-teal-500" />
+                                        </div>
+                                        <div className="font-bold text-slate-800 text-sm mb-1 line-clamp-1 group-hover:text-teal-700 transition-colors">{rel.targetName}</div>
+                                        <div className="text-xs text-slate-500 line-clamp-1">{rel.desc}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {course.terms && (
                         <div>

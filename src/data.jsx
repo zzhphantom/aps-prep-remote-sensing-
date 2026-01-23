@@ -88,6 +88,11 @@ export const COURSE_DATA = [
           { cn: "红边效应", en: "Red Edge Effect", desc_cn: "绿色植被在红光（强吸收）和近红外（强反射）之间反射率急剧上升的现象。", desc_en: "Sharp rise in reflectance between Red and NIR bands for vegetation." },
           { cn: "大气窗口", en: "Atmospheric Window", desc_cn: "电磁波通过大气层时衰减较少、透过率较高的波段。", desc_en: "Spectral ranges where the atmosphere is transparent to radiation." }
         ],
+        relations: [
+          { targetId: 'm8', targetName: 'College Physics C2', label: '理论基础 (Foundation)', desc: '电磁波理论(Maxwell Eqs)是遥感的物理本源' },
+          { targetId: 's2', targetName: 'Photography Surveying', label: '技术对比 (Contrast)', desc: 'RS侧重光谱特征(What)，Photo侧重几何位置(Where)' },
+          { targetId: 'c2', targetName: 'Microwave Remote Sensing', label: '波段延伸 (Extension)', desc: '从光学(被动)延伸到微波(主动)' }
+        ],
         notes: []
       },
       {
@@ -146,6 +151,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "合成孔径", en: "Synthetic Aperture", desc_cn: "利用小天线沿飞行轨迹运动，通过信号处理合成一个等效的大孔径天线。", desc_en: "Simulating a large antenna by moving a small antenna along a flight path." },
           { cn: "叠掩", en: "Layover", desc_cn: "雷达特有的极端几何畸变，山顶成像在山底之前。", desc_en: "Extreme distortion where the top is imaged before the bottom." }
+        ],
+        relations: [
+          { targetId: 'm8', targetName: 'College Physics C2', label: '物理基础 (Physics Foundation)', desc: '微波的产生与传播依赖电磁学理论' },
+          { targetId: 's4', targetName: 'Lidar Technology', label: '主动遥感 (Active RS)', desc: '雷达与激光雷达同属主动遥感，互为补充' }
         ],
         notes: []
       },
@@ -207,6 +216,10 @@ export const COURSE_DATA = [
           { cn: "发射率", en: "Emissivity", desc_cn: "物体实际辐射能量与同温度黑体辐射能量的比值（0-1）。", desc_en: "Ratio of object radiance to blackbody radiance at same temp." },
           { cn: "城市热岛", en: "UHI", desc_cn: "城市气温高于郊区的现象，研究发现它与不透水面(ISA)正相关，与植被指数(NDVI)负相关。", desc_en: "Urban warmer than rural. Correlates positively with Impervious Surface, negatively with Vegetation." }
         ],
+        relations: [
+          { targetId: 'm7', targetName: 'College Physics C1', label: '热学基础 (Thermal Foundation)', desc: '黑体辐射与热力学定律是热红外的基石' },
+          { targetId: 'c9', targetName: 'RS Application Model', label: '应用深化 (Application)', desc: '地表温度(LST)是反演蒸散发(ET)的关键参数' }
+        ],
         notes: []
       },
       {
@@ -265,6 +278,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "多余观测", en: "Redundancy", desc_cn: "观测值数量多于确定未知量所需的最少数量。没有多余观测就无法进行平差。", desc_en: "Observations > Unknowns. Prerequisite for adjustment." },
           { cn: "权", en: "Weight (P)", desc_cn: "衡量观测值相对可靠程度的指标，精度越高，权越大（与方差成反比）。", desc_en: "Relative reliability. Inverse to variance." }
+        ],
+        relations: [
+          { targetId: 'm6', targetName: 'Prob & Stat', label: '理论支撑 (Theory Support)', desc: '误差分布服从正态分布，平差原理基于最大似然估计' },
+          { targetId: 'm5', targetName: 'Linear Algebra A', label: '计算工具 (Computation Tool)', desc: '平差模型的解算完全依赖矩阵运算' }
         ],
         notes: []
       },
@@ -330,6 +347,11 @@ export const COURSE_DATA = [
           { cn: "混淆矩阵", en: "Confusion Matrix", desc_cn: "通过对比分类结果与地面真值，计算总体精度(OA)和Kappa系数，是评价分类好坏的标准。", desc_en: "Table comparing classification vs ground truth to assess accuracy." },
           { cn: "卷积", en: "Convolution", desc_cn: "一种数学运算，利用小窗口（卷积核）对图像逐像素加权求和，是滤波和CNN的基础。", desc_en: "Mathematical operation using a kernel to process image pixels." }
         ],
+        relations: [
+          { targetId: 'm5', targetName: 'Linear Algebra A', label: '数学工具 (Math Tool)', desc: '图像本质是矩阵，滤波与变换全是矩阵运算' },
+          { targetId: 'p5', targetName: 'C Programming', label: '编程实现 (Implementation)', desc: '底层图像处理算法通常用C/C++实现以保证效率' },
+          { targetId: 'c8', targetName: 'RS Image Interpretation', label: '计算机视觉 (Computer Vision)', desc: '从像素处理(DIP)走向语义理解(Interp)' }
+        ],
         notes: []
       },
       {
@@ -389,6 +411,10 @@ export const COURSE_DATA = [
           { cn: "纹理", en: "Texture", desc_cn: "图像色调变化的频率和排列。森林纹理粗糙，水面纹理光滑。", desc_en: "Frequency of tonal variation. Forest=Rough, Water=Smooth." },
           { cn: "二分检索表", en: "Dichotomous Key", desc_cn: "一种分类工具，每一步通过回答‘是/否’两个选项，逐步缩小范围直到确定类别。", desc_en: "Step-by-step classification tool with binary choices." }
         ],
+        relations: [
+          { targetId: 'c1', targetName: 'Principles of RS', label: '特征基础 (Feature Foundation)', desc: '光谱特征是目视解译的重要依据' },
+          { targetId: 'm13', targetName: 'Physical Geology', label: '地学背景 (Geology Background)', desc: '地貌判读需要深厚的地质学知识' }
+        ],
         notes: []
       },
       {
@@ -442,6 +468,10 @@ export const COURSE_DATA = [
           { cn: "反演", en: "Inversion / Retrieval", desc_cn: "从观测到的信号（结果）推导地表参数（原因）的过程，通常需要解决多解性问题。", desc_en: "Deriving parameters from signals. Often an inverse problem." },
           { cn: "查找表", en: "Look-Up Table (LUT)", desc_cn: "为了加速物理模型反演，预先计算好各种参数组合下的模型输出，反演时直接查表匹配。", desc_en: "Pre-computed database to speed up physical model inversion." }
         ],
+        relations: [
+          { targetId: 'm6', targetName: 'Prob & Stat', label: '统计建模 (Statistical Modeling)', desc: '回归分析与假设检验是统计模型的核心' },
+          { targetId: 'm14', targetName: 'Intro to Ecology', label: '应用领域 (Application Field)', desc: '生态系统参数（如NPP/生物量）是建模的主要对象' }
+        ],
         notes: []
       },
       {
@@ -483,6 +513,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "维数灾难", en: "Hughes Phenomenon", desc_cn: "在训练样本有限的情况下，随着波段数增加，分类精度反而先升后降的现象。", desc_en: "Accuracy drops with increasing dimensionality if training samples are limited." },
           { cn: "端元", en: "Endmember", desc_cn: "构成混合像元的纯净物质的光谱曲线。", desc_en: "Pure spectral signature of a material in a mixed pixel." }
+        ],
+        relations: [
+          { targetId: 'c1', targetName: 'Principles of RS', label: '基础 (Foundation)', desc: '前沿技术是基础理论的延伸与突破' },
+          { targetId: 'p3', targetName: 'Computer Vision', label: '深度融合 (Deep Integration)', desc: '深度学习彻底改变了遥感信息提取的范式' }
         ],
         notes: []
       },
@@ -526,6 +560,10 @@ export const COURSE_DATA = [
           { cn: "变化检测", en: "Change Detection", desc_cn: "通过对比同一地区不同时相的影像，提取地表变化状态的技术。", desc_en: "Identifying differences by observing at different times." },
           { cn: "NDWI", en: "NDWI", desc_cn: "归一化差异水体指数 (Green-NIR)/(Green+NIR)，用于突显水体。", desc_en: "Normalized Difference Water Index." }
         ],
+        relations: [
+          { targetId: 'c2', targetName: 'Microwave RS', label: '核心技术 (Core Tech)', desc: 'SAR的全天候特性对洪水监测至关重要' },
+          { targetId: 's5', targetName: 'GNSS Principles', label: '辅助监测 (Auxiliary Monitoring)', desc: '灾害监测往往结合GNSS进行高精度位移测量' }
+        ],
         notes: []
       },
       {
@@ -567,6 +605,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "GSD", en: "Ground Sample Distance", desc_cn: "地面采样距离，即照片上一个像素代表的实际地面物理尺寸（如5cm）。", desc_en: "Physical size of one pixel on the ground." },
           { cn: "正射影像", en: "DOM", desc_cn: "经过几何纠正，消除了投影差，具有地图几何精度的影像。", desc_en: "Digital Orthophoto Map. Geometrically corrected image." }
+        ],
+        relations: [
+          { targetId: 's2', targetName: 'Photography Surveying', label: '核心原理 (Core Principle)', desc: 'UAV建模本质上是低空摄影测量(SfM vs 空三)' },
+          { targetId: 's5', targetName: 'GNSS Principles', label: '定位支持 (Positioning Support)', desc: 'RTK-GPS为无人机提供厘米级定位与POS数据' }
         ],
         notes: []
       },
@@ -611,6 +653,10 @@ export const COURSE_DATA = [
           { cn: "转移矩阵", en: "Transition Matrix", desc_cn: "一个表格，展示了从时相T1到时相T2，各类别之间相互转化的面积。", desc_en: "Matrix showing area changes between classes over time." },
           { cn: "地面实测", en: "Ground Truth", desc_cn: "用于验证遥感解译结果准确性的真实地面数据。", desc_en: "Real data collected on ground for validation." }
         ],
+        relations: [
+          { targetId: 'c1', targetName: 'Principles of RS', label: '综合应用 (Comprehensive Application)', desc: '综合运用了遥感全流程知识' },
+          { targetId: 'c7', targetName: 'DIP', label: '技术支撑 (Tech Support)', desc: '预处理与分类是项目成功的关键' }
+        ],
         notes: []
       },
       {
@@ -650,6 +696,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "GCP", en: "Ground Control Point", desc_cn: "地面控制点，用于建立图像坐标与地理坐标的联系。", desc_en: "Points used to link image coords to map coords." },
           { cn: "ROI", en: "Region of Interest", desc_cn: "在图像上选取的子区域，常用于作为分类的训练样本。", desc_en: "Subset of image used as training samples." }
+        ],
+        relations: [
+          { targetId: 'c1', targetName: 'Principles of RS', label: '实践对象 (Practice Object)', desc: '理论知识在ENVI软件中的具体操作' },
+          { targetId: 'c7', targetName: 'DIP', label: '算法实现 (Algorithm Implementation)', desc: '亲手操作最大似然分类与图像增强' }
         ],
         notes: []
       },
@@ -692,6 +742,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "GDAL", en: "Geospatial Data Abstraction Library", desc_cn: "一个开源栅格空间数据转换库，是遥感编程的事实标准。", desc_en: "Open source translator library for raster geospatial data." },
           { cn: "迭代", en: "Iteration", desc_cn: "在算法中重复执行一系列步骤直到满足停止条件（如K-means收敛）。", desc_en: "Repeating steps until a condition is met." }
+        ],
+        relations: [
+          { targetId: 'p5', targetName: 'C Programming', label: '基础 (Foundation)', desc: 'GDAL底层由C++编写，Python调用需理解指针与内存' },
+          { targetId: 'c7', targetName: 'DIP', label: '底层复现 (Low-level Implementation)', desc: '手写代码实现NDVI计算与直方图统计' }
         ],
         notes: []
       },
@@ -787,6 +841,10 @@ export const COURSE_DATA = [
           { cn: "大地水准面", en: "Geoid", desc_cn: "一个与平均海水面重合并延伸到大陆内部的封闭重力等位面，是正高系统的基准面。", desc_en: "Equipotential surface of gravity coinciding with mean sea level." },
           { cn: "高斯投影", en: "Gauss Projection", desc_cn: "一种保角投影，中国地形图（1:50万以上）主要采用此投影。", desc_en: "Conformal projection used for Chinese topographic maps." }
         ],
+        relations: [
+          { targetId: 'm7', targetName: 'College Physics C1', label: '重力场 (Gravity Field)', desc: '大地水准面的定义依赖重力位势理论' },
+          { targetId: 'm1', targetName: 'Adv. Math B1', label: '几何基础 (Geometry Foundation)', desc: '椭球面的曲率半径计算需要微分几何与微积分' }
+        ],
         notes: []
       },
       {
@@ -832,6 +890,10 @@ export const COURSE_DATA = [
           { cn: "外方位元素", en: "Exterior Orientation", desc_cn: "描述摄影瞬间摄影中心在地面坐标系中的位置(Xs,Ys,Zs)和姿态(φ,ω,κ)的6个参数。", desc_en: "6 params describing position and attitude of the camera center." },
           { cn: "核线", en: "Epipolar Line", desc_cn: "核面与影像面的交线。同名像点必定位于同名核线上，这大大简化了影像匹配搜索范围。", desc_en: "Intersection of epipolar plane and image plane; used to constrain matching." }
         ],
+        relations: [
+          { targetId: 'm5', targetName: 'Linear Algebra A', label: '数学核心 (Math Core)', desc: '共线方程解算不仅依靠矩阵求逆，还需要最小二乘平差' },
+          { targetId: 's1', targetName: 'Fund. of Geodesy', label: '空间基准 (Spatial Reference)', desc: '绝对定向需要将像空间坐标转换为大地坐标' }
+        ],
         notes: []
       },
       {
@@ -871,6 +933,9 @@ export const COURSE_DATA = [
           ]
         },
         terms: [],
+        relations: [
+          { targetId: 's2', targetName: 'Photography Surveying', label: '实践 (Practice)', desc: '全数字摄影测量工作站的操作' }
+        ],
         notes: []
       },
       {
@@ -916,6 +981,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "点云", en: "Point Cloud", desc_cn: "海量三维坐标点的集合，是LiDAR数据的基本组织形式。", desc_en: "Collection of massive 3D points." },
           { cn: "全波形", en: "Full Waveform", desc_cn: "记录回波能量随时间变化的完整曲线，而不仅仅是离散点，包含更多物体结构信息。", desc_en: "Recording the full energy profile of the echo." }
+        ],
+        relations: [
+          { targetId: 'm8', targetName: 'College Physics C2', label: '物理原理 (Physics Principle)', desc: '激光测距基于光速恒定原理' },
+          { targetId: 's2', targetName: 'Photography Surveying', label: '互补技术 (Complementary Tech)', desc: 'LiDAR获取结构(Z)，摄影测量获取纹理(RGB)' }
         ],
         notes: []
       },
@@ -965,6 +1034,10 @@ export const COURSE_DATA = [
           { cn: "整周模糊度", en: "Integer Ambiguity", desc_cn: "载波相位测量中，起始时刻卫星到接收机之间未知的整波数。解算出它(Fix)是高精度定位的关键。", desc_en: "Unknown number of full cycles at start. Solving it is key to precision." },
           { cn: "DOP", en: "Dilution of Precision", desc_cn: "精度衰减因子。反映卫星空间几何分布对定位精度的影响，值越小越好。", desc_en: "Geometric strength of satellite configuration. Lower is better." }
         ],
+        relations: [
+          { targetId: 's1', targetName: 'Fund. of Geodesy', label: '坐标系 (Coordinate System)', desc: 'WGS84与CGCS2000坐标系转换是GNSS应用的前提' },
+          { targetId: 'm8', targetName: 'College Physics C2', label: '信号传播 (Signal Propagation)', desc: '电离层与对流层延迟是电磁波传播的物理效应' }
+        ],
         notes: []
       },
       {
@@ -1010,6 +1083,10 @@ export const COURSE_DATA = [
           { cn: "体素", en: "Voxel", desc_cn: "体积元素(Volume Pixel)，是三维空间分割的最小单位，类似二维图像的像素。", desc_en: "Volume element. 3D equivalent of a pixel." },
           { cn: "CityGML", en: "CityGML", desc_cn: "一种开放的XML格式，用于存储和交换三维城市模型，如定义了建筑物的LOD等级。", desc_en: "Open XML standard for 3D city models." }
         ],
+        relations: [
+          { targetId: 's8', targetName: 'Prin of GIS', label: '进阶 (Advanced)', desc: '从二维平面扩展到三维立体空间' },
+          { targetId: 'p3', targetName: 'Computer Vision', label: '技术融合 (Tech Integration)', desc: '三维重建常借助CV领域的SfM与SLAM技术' }
+        ],
         notes: []
       },
       {
@@ -1051,6 +1128,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "碎部点", en: "Detail Point", desc_cn: "反映地物特征和地貌特征的关键点，如房角、道路转折点。", desc_en: "Key points defining features and terrain." },
           { cn: "地物与地貌", en: "Features & Terrain", desc_cn: "地物是地面上的物体（房/路），地貌是地面的起伏状态（山/谷）。", desc_en: "Features (Objects) vs Terrain (Relief)." }
+        ],
+        relations: [
+          { targetId: 's10', targetName: 'Surveying A', label: '应用与延伸 (Application & Extension)', desc: '将全站仪测量数据转化为数字图形' },
+          { targetId: 's8', targetName: 'Prin of GIS', label: '数据源 (Data Source)', desc: '数字测图是GIS最重要的矢量数据来源' }
         ],
         notes: []
       },
@@ -1098,6 +1179,10 @@ export const COURSE_DATA = [
           { cn: "拓扑", en: "Topology", desc_cn: "在橡胶表面变换下保持不变的空间属性。即不考虑几尺度和具体位置，只关注相对关系。", desc_en: "Spatial relationships unchanged by rubber-sheet transformations." },
           { cn: "四叉树", en: "Quadtree", desc_cn: "一种常用的栅格数据压缩编码方法，将图像递归划分为四个象限。", desc_en: "Raster compression coding by recursively dividing into 4 quadrants." }
         ],
+        relations: [
+          { targetId: 'p1', targetName: 'Data Structure', label: '底层实现 (Low-level Implementation)', desc: '矢量(链表/树)与栅格(数组)深受数据结构影响' },
+          { targetId: 's10', targetName: 'Surveying A', label: '数据来源 (Data Source)', desc: '测绘是GIS数据的主要来源之一' }
+        ],
         notes: []
       },
       {
@@ -1131,6 +1216,9 @@ export const COURSE_DATA = [
           ]
         },
         terms: [],
+        relations: [
+          { targetId: 's8', targetName: 'Prin of GIS', label: '实践 (Practice)', desc: 'GIS软件操作' }
+        ],
         notes: []
       },
       {
@@ -1176,6 +1264,10 @@ export const COURSE_DATA = [
           { cn: "视准轴", en: "Collimation Axis", desc_cn: "望远镜物镜光心与十字丝中心的连线。", desc_en: "Line connecting objective lens center and crosshair center." },
           { cn: "i角", en: "i-angle", desc_cn: "水准仪视准轴与水准管轴不平行产生的夹角。", desc_en: "Angle between line of sight and bubble tube axis." }
         ],
+        relations: [
+          { targetId: 'm1', targetName: 'Adv. Math B1', label: '计算基础 (Calculation Foundation)', desc: '角度与距离的计算涉及三角函数' },
+          { targetId: 'm9', targetName: 'Physics Exp A1', label: '仪器操作 (Instrument Operation)', desc: '物理实验中的误差理论与精密仪器调节是测量的基础' }
+        ],
         notes: []
       },
       {
@@ -1208,6 +1300,9 @@ export const COURSE_DATA = [
           ]
         },
         terms: [],
+        relations: [
+          { targetId: 's10', targetName: 'Surveying A', label: '实践 (Practice)', desc: '校园测量实习' }
+        ],
         notes: []
       },
       {
@@ -1249,6 +1344,10 @@ export const COURSE_DATA = [
           { cn: "视觉变量", en: "Visual Variables", desc_cn: "Jacques Bertin提出，地图符号可变化的图形属性（如大小、颜色），是地图语言的基本词汇。", desc_en: "Graphic attributes of symbols (size, color) used to encode data." },
           { cn: "分级统计图", en: "Choropleth Map", desc_cn: "用区域颜色的深浅或纹理疏密来表示统计数据数值大小的地图。", desc_en: "Map using color shading to represent data values in areas." }
         ],
+        relations: [
+          { targetId: 'c7', targetName: 'DIP', label: '色彩原理 (Color Principle)', desc: 'RGB与CMYK色彩空间是地图可视化的基础' },
+          { targetId: 's8', targetName: 'Prin of GIS', label: '呈现手段 (Presentation)', desc: '分析结果的最终出口是专题地图' }
+        ],
         notes: []
       },
       {
@@ -1287,6 +1386,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "MBR", en: "Minimum Bounding Rectangle", desc_cn: "包含一个几何对象的最小的轴对齐矩形，是建立空间索引的基础。", desc_en: "Smallest axis-aligned rectangle enclosing an object." },
           { cn: "轨迹", en: "Trajectory", desc_cn: "移动对象在时空中的运动路径，由一系列(x, y, t)采样点组成。", desc_en: "Path of a moving object in space-time." }
+        ],
+        relations: [
+          { targetId: 's8', targetName: 'Prin of GIS', label: '时间维度 (Temporal Dimension)', desc: 'GIS从静态走向动态' },
+          { targetId: 'p1', targetName: 'Data Structure', label: '索引技术 (Indexing Tech)', desc: 'R树是B树在多维空间的推广' }
         ],
         notes: []
       },
@@ -1334,6 +1437,10 @@ export const COURSE_DATA = [
           { cn: "地理学第一定律", en: "Tobler's First Law", desc_cn: "任何事物都是相关的，但相近的事物关联更紧密。", desc_en: "Everything is related, but near things are more related than distant things." },
           { cn: "GWR", en: "Geographically Weighted Regression", desc_cn: "地理加权回归。允许回归系数随空间位置变化，以解决空间非平稳性问题。", desc_en: "Regression where coefficients vary by location." }
         ],
+        relations: [
+          { targetId: 's8', targetName: 'Prin of GIS', label: '分析进阶 (Advanced Analysis)', desc: '空间统计通过GIS平台实现可视化与计算' },
+          { targetId: 'm6', targetName: 'Prob & Stat', label: '理论源头 (Theory Source)', desc: '地理学第一定律将统计学引入了空间维度' }
+        ],
         notes: []
       }
     ]
@@ -1379,6 +1486,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "时间复杂度", en: "Time Complexity", desc_cn: "描述算法运行时间随输入规模增长的变化趋势（如O(n)），而非具体秒数。", desc_en: "Growth rate of runtime vs input size (Big O notation)." },
           { cn: "哈希表", en: "Hash Table", desc_cn: "通过映射函数(Hash Function)实现O(1)平均查找速度的数据结构。", desc_en: "DS aiming for O(1) lookups via mapping functions." }
+        ],
+        relations: [
+          { targetId: 'p5', targetName: 'C Programming', label: '实现语言 (Implementation Language)', desc: '指针是实现链表、树、图的关键' },
+          { targetId: 's13', targetName: 'Spatio-temporal DB', label: '高级应用 (Advanced Application)', desc: 'R树索引是树结构在空间数据中的变体' }
         ],
         notes: []
       },
@@ -1436,6 +1547,10 @@ export const COURSE_DATA = [
           { cn: "过拟合", en: "Overfitting", desc_cn: "模型在训练集表现太好，泛化能力差。解决方法：Dropout、正则化、增加数据。", desc_en: "Good on training, bad on test. Fix: Dropout, Regularization." },
           { cn: "IoU", en: "Intersection over Union", desc_cn: "交并比。目标检测中衡量预测框准确度的指标。", desc_en: "Metric for measuring accuracy of an object detector." }
         ],
+        relations: [
+          { targetId: 'm5', targetName: 'Linear Algebra A', label: '基石 (Foundation)', desc: '卷积运算本质上是矩阵的点积' },
+          { targetId: 'c7', targetName: 'DIP', label: '前导课 (Prerequisite)', desc: 'DIP处理图像信号，CV提取图像语义' }
+        ],
         notes: []
       },
       {
@@ -1470,6 +1585,10 @@ export const COURSE_DATA = [
         terms: [
           { cn: "维度灾难", en: "Curse of Dimensionality", desc_cn: "特征维度增加导致样本稀疏，需要指数级增加的样本量才能维持估算精度。", desc_en: "High dims -> Sparse data -> Needs exponential data to learn." },
           { cn: "先验概率", en: "Prior Probability", desc_cn: "在看观测数据之前，对样本属于某类的概率的主观估计。", desc_en: "Probability before seeing evidence." }
+        ],
+        relations: [
+          { targetId: 'm6', targetName: 'Prob & Stat', label: '数学基础', desc: '贝叶斯决策理论基于概率论' },
+          { targetId: 'p3', targetName: 'Computer Vision', label: '应用场景', desc: '模式识别是CV分类任务的理论内核' }
         ],
         notes: []
       },
@@ -1506,6 +1625,9 @@ export const COURSE_DATA = [
           { cn: "段错误", en: "Segmentation Fault", desc_cn: "访问了未分配或无权访问的内存区域。", desc_en: "Accessing unauthorized memory." },
           { cn: "内存泄漏", en: "Memory Leak", desc_cn: "申请的堆内存未释放，导致程序占用内存持续增加。", desc_en: "Failure to free allocated memory." }
         ],
+        relations: [
+          { targetId: 'p1', targetName: 'Data Structure', label: '实现基础', desc: 'C语言指针是实现复杂数据结构的关键' }
+        ],
         notes: []
       },
       {
@@ -1540,6 +1662,9 @@ export const COURSE_DATA = [
         terms: [
           { cn: "虚函数表", en: "v-table", desc_cn: "编译器为每个有虚函数的类生成的函数指针数组，是实现动态多态的基础。", desc_en: "Table of function pointers for dynamic binding." },
           { cn: "构造/析构", en: "Ctor/Dtor", desc_cn: "对象创建时初始化/销毁时清理（RAII机制的核心）。", desc_en: "Init/Cleanup. Core of RAII." }
+        ],
+        relations: [
+          { targetId: 'p5', targetName: 'C Programming', label: '进阶', desc: '从面向过程走向面向对象' }
         ],
         notes: []
       },
@@ -1595,6 +1720,9 @@ export const COURSE_DATA = [
           { cn: "微积分基本定理", en: "Fundamental Theorem of Calculus", desc_cn: "联系微分与积分的桥梁，表明积分就是原函数的增量。", desc_en: "Relates interpolation and differentiation." },
           { cn: "洛必达法则", en: "L'Hopital's Rule", desc_cn: "利用导数来计算0/0或∞/∞型未定式极限的方法。", desc_en: "Using derivatives to find limits of indeterminate forms." }
         ],
+        relations: [
+          { targetId: 'm7', targetName: 'College Physics C1', label: '工具', desc: '微积分是描述物理运动变化的语言' }
+        ],
         notes: []
       },
       {
@@ -1632,6 +1760,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "知识点同B1但更深", en: "Same as B1 but deeper" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm1', targetName: 'Adv. Math B1', label: '深造', desc: '更严谨的理论证明体系' }
+        ],
         notes: []
       },
       {
@@ -1647,6 +1778,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "知识点同B2但更深", en: "Same as B2 but deeper" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm2', targetName: 'Adv. Math B2', label: '深造', desc: '涵盖场论等更高级的数学工具' }
+        ],
         notes: []
       },
       {
@@ -1682,6 +1816,10 @@ export const COURSE_DATA = [
           { cn: "秩", en: "Rank", desc_cn: "矩阵中线性无关的行或列的最大数目，反映了矩阵的信息量。", desc_en: "Max number of linearly independent rows/cols." },
           { cn: "正交矩阵", en: "Orthogonal Matrix", desc_cn: "转置等于逆的矩阵。表示旋转变换，保持长度和角度不变。", desc_en: "Transpose = Inverse. Represents rotation." }
         ],
+        relations: [
+          { targetId: 'c6', targetName: 'Error Theory', label: '应用', desc: '最小二乘平差(B^TPB)x=B^TPL 完全依赖矩阵运算' },
+          { targetId: 'p3', targetName: 'Computer Vision', label: '应用', desc: 'PCA特征提取是特征值分解的直接应用' }
+        ],
         notes: []
       },
       {
@@ -1715,6 +1853,9 @@ export const COURSE_DATA = [
           ]
         },
         terms: [],
+        relations: [
+          { targetId: 'm1', targetName: 'Adv. Math B1', label: '基础', desc: '概率论需要微积分计算概率密度' }
+        ],
         notes: []
       },
       {
@@ -1730,6 +1871,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "力热基础", en: "Mech & Heat" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm1', targetName: 'Adv. Math B1', label: '基础', desc: '牛顿力学建立在微积分基础上' }
+        ],
         notes: []
       },
       {
@@ -1761,6 +1905,9 @@ export const COURSE_DATA = [
           ]
         },
         terms: [],
+        relations: [
+          { targetId: 'm7', targetName: 'College Physics C1', label: '进阶', desc: '电磁学是物理学的核心分支' }
+        ],
         notes: []
       },
       {
@@ -1776,6 +1923,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "基础实验", en: "Basic Labs" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm7', targetName: 'College Physics C1', label: '验证', desc: '通过实验验证力学与热学定律' }
+        ],
         notes: []
       },
       {
@@ -1791,6 +1941,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "进阶实验", en: "Adv Labs" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm8', targetName: 'College Physics C2', label: '验证', desc: '验证电磁学与光学现象' }
+        ],
         notes: []
       },
       {
@@ -1806,6 +1959,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "化学基础", en: "Chem Basics" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm8', targetName: 'College Physics C2', label: '基础', desc: '原子结构理解依赖量子物理基础' }
+        ],
         notes: []
       },
       {
@@ -1821,6 +1977,9 @@ export const COURSE_DATA = [
         },
         logicTree: { label: { cn: "实验技能", en: "Lab Skills" }, children: [] },
         terms: [],
+        relations: [
+          { targetId: 'm11', targetName: 'College Chemistry C', label: '验证', desc: '化学理论的实验验证' }
+        ],
         notes: []
       },
       {
@@ -1854,6 +2013,9 @@ export const COURSE_DATA = [
         terms: [
           { cn: "板块构造", en: "Plate Tectonics", desc_cn: "地球岩石圈由若干移动的刚性板块组成的理论。", desc_en: "Lithosphere divided into moving plates." },
           { cn: "矿物", en: "Mineral", desc_cn: "天然形成的具有特定化学成分和晶体结构的固体。", desc_en: "Natural solid with specific composition and structure." }
+        ],
+        relations: [
+          { targetId: 'm11', targetName: 'College Chemistry C', label: '成分基础', desc: '矿物的化学成分决定其物理性质' }
         ],
         notes: []
       },
