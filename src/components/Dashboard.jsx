@@ -49,6 +49,15 @@ const InterviewSim = ({ aiConfig }) => {
     const [showList, setShowList] = useState(false); // 显示列表视图
     const [searchTerm, setSearchTerm] = useState("");
 
+    // Ensure idx is always valid when qs changes (e.g., after deletion)
+    useEffect(() => {
+        if (qs.length > 0 && idx >= qs.length) {
+            setIdx(qs.length - 1);
+        } else if (qs.length === 0) {
+            setIdx(0);
+        }
+    }, [qs.length, idx]);
+
     const jumpTo = (i) => {
         setIdx(i);
         setShow(false);
@@ -64,10 +73,7 @@ const InterviewSim = ({ aiConfig }) => {
 
         try {
             await deleteDoc(doc(db, 'interview_questions', id));
-            // Ensure index is valid after deletion
-            if (idx >= qs.length - 2) {
-                setIdx(Math.max(0, idx - 1));
-            }
+            // Index will be adjusted automatically by the useEffect above
         } catch (err) {
             console.error("删除失败:", err);
             alert("删除失败");
@@ -160,6 +166,9 @@ const InterviewSim = ({ aiConfig }) => {
     };
 
 
+    // Safety check: ensure current question exists
+    const currentQ = qs[idx];
+    const hasQuestions = qs.length > 0;
 
     return (
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col h-full relative overflow-hidden">
@@ -170,7 +179,7 @@ const InterviewSim = ({ aiConfig }) => {
                     {loading ? "AI 出题中..." : "模拟面试"}
                 </h3>
                 <div className="flex items-center gap-2">
-                    {qs[idx].id && (
+                    {hasQuestions && currentQ?.id && (
                         <button
                             onClick={handleDelete}
                             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -180,7 +189,7 @@ const InterviewSim = ({ aiConfig }) => {
                         </button>
                     )}
                     <span className="text-xs font-mono font-bold bg-purple-50 text-purple-700 px-3 py-1 rounded-full border border-purple-100">
-                        {idx + 1} / {qs.length}
+                        {hasQuestions ? `${idx + 1} / ${qs.length}` : '0 / 0'}
                     </span>
                     <button
                         onClick={() => setShowList(!showList)}
@@ -268,22 +277,27 @@ const InterviewSim = ({ aiConfig }) => {
                         <div className="h-6 bg-slate-100 rounded w-3/4"></div>
                         <div className="h-4 bg-slate-100 rounded w-1/2"></div>
                     </div>
-                ) : (
+                ) : !hasQuestions ? (
+                    <div className="text-center text-slate-400 py-12">
+                        <p className="text-lg mb-2">暂无题目</p>
+                        <p className="text-sm">点击下方"AI 出题"按钮生成新题目</p>
+                    </div>
+                ) : currentQ ? (
                     <>
                         <div className="space-y-2 mb-4">
-                            <h4 className="text-xl font-bold text-slate-800 leading-snug">{qs[idx].q_en}</h4>
-                            <p className="text-base text-slate-500 font-medium">{qs[idx].q_cn}</p>
+                            <h4 className="text-xl font-bold text-slate-800 leading-snug">{currentQ.q_en}</h4>
+                            <p className="text-base text-slate-500 font-medium">{currentQ.q_cn}</p>
                         </div>
 
                         {show ? (
                             <div className="bg-slate-50 p-5 rounded-2xl text-sm text-slate-700 border-l-4 border-purple-500 animate-in fade-in space-y-3 max-h-[40vh] overflow-y-auto scrollbar-hide">
                                 <div>
                                     <p className="font-bold text-slate-800 mb-1">English Answer:</p>
-                                    <p>{qs[idx].a_en}</p>
+                                    <p>{currentQ.a_en}</p>
                                 </div>
                                 <div className="border-t border-slate-200 pt-2">
                                     <p className="font-bold text-slate-800 mb-1">中文参考:</p>
-                                    <p>{qs[idx].a_cn}</p>
+                                    <p>{currentQ.a_cn}</p>
                                 </div>
                             </div>
                         ) : (
@@ -295,7 +309,7 @@ const InterviewSim = ({ aiConfig }) => {
                             </div>
                         )}
                     </>
-                )}
+                ) : null}
             </div>
 
             {/* Control Bar */}

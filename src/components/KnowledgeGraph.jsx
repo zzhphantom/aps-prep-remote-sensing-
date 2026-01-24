@@ -308,6 +308,17 @@ const KnowledgeGraph = ({ onCourseClick }) => {
                         style={{ backgroundImage: 'radial-gradient(#4f46e5 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
                     </div>
 
+                    {/* Back Button (Fixed in Graph Area - Top Left) */}
+                    {history.length > 0 && (
+                        <button
+                            onClick={handleBack}
+                            className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-indigo-100 text-indigo-700 font-bold text-sm hover:bg-white hover:scale-105 transition-all animate-in fade-in slide-in-from-left-4"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                            Back
+                        </button>
+                    )}
+
                     {/* Zoom Controls */}
                     <div className="absolute bottom-6 right-6 z-30 flex flex-col gap-2 bg-white/90 backdrop-blur shadow-lg border border-slate-200 rounded-lg p-1.5 pointer-events-auto">
                         <button onClick={handleZoomIn} className="p-3 hover:bg-slate-100 rounded-md text-slate-600 active:bg-slate-200 transition-colors" title="Zoom In">
@@ -463,16 +474,6 @@ const KnowledgeGraph = ({ onCourseClick }) => {
                                 <Info className="w-3 h-3 mr-1.5" />
                                 暂无关联数据，请选择 "Principles of RS" 查看演示
                             </div>
-                        )}
-                        {/* Back Button (Floating) */}
-                        {history.length > 0 && (
-                            <button
-                                onClick={handleBack}
-                                className="absolute top-6 left-6 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-xl shadow-lg border border-indigo-100 text-indigo-700 font-bold text-sm hover:bg-white hover:scale-105 transition-all animate-in fade-in slide-in-from-left-4"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                                Back
-                            </button>
                         )}
                     </div>
                 </div>
