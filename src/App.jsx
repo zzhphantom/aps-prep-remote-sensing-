@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Layers, BookOpen, Award, Sparkles, Smartphone, Network, GraduationCap } from 'lucide-react';
+import { Layers, BookOpen, Award, Sparkles, Smartphone, Network, GraduationCap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { collection, addDoc, deleteDoc, doc, query, where, getDocs, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import { calculateCourseProgress } from './utils/aiProgress';
@@ -22,6 +22,7 @@ export default function App() {
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [history, setHistory] = useState([]); // Navigation history stack
   const [toast, setToast] = useState(null);
+  const [isMenuCollapsed, setIsMenuCollapsed] = useState(false); // Main menu collapse state
 
   // AI Config State
   const [aiConfig, setAiConfig] = useState(() => {
@@ -365,12 +366,22 @@ export default function App() {
     <div className="flex flex-col md:flex-row h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden relative">
       {toast && <Toast message={toast} onClose={() => setToast(null)} />}
 
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full p-4 z-20 flex-shrink-0">
-        <div className="flex items-center space-x-3 px-4 py-4 mb-6">
-          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">RS</div>
-          <span className="font-bold text-slate-800 text-lg tracking-tight">Logic Prep</span>
+      <aside className={`hidden md:flex flex-col bg-white border-r border-slate-200 h-full p-3 z-20 flex-shrink-0 transition-all duration-300 ease-in-out relative ${isMenuCollapsed ? 'w-20 items-center' : 'w-64'}`}>
+        <div className={`flex items-center space-x-3 px-2 py-4 mb-2 ${isMenuCollapsed ? 'justify-center' : ''}`}>
+          <div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-teal-700 rounded-lg flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0">RS</div>
+          {!isMenuCollapsed && <span className="font-bold text-slate-800 text-lg tracking-tight whitespace-nowrap overflow-hidden">Logic Prep</span>}
         </div>
-        <nav className="space-y-2 flex-1">
+
+        {/* Toggle Button */}
+        <button
+          onClick={() => setIsMenuCollapsed(!isMenuCollapsed)}
+          className="absolute top-8 -right-3 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm text-slate-400 hover:text-slate-600 hover:scale-110 transition-all z-30"
+          title={isMenuCollapsed ? "Expand Menu" : "Collapse Menu"}
+        >
+          {isMenuCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
+        </button>
+
+        <nav className="space-y-2 flex-1 w-full mt-4">
           {[
             { id: 'dashboard', label: '概览 Dashboard', icon: Layers },
             { id: 'courses', label: '课程 Courses', icon: BookOpen },
@@ -382,14 +393,16 @@ export default function App() {
             <button
               key={item.id}
               onClick={() => setTab(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+              className={`w-full flex items-center ${isMenuCollapsed ? 'justify-center px-0' : 'space-x-3 px-4'} py-3 rounded-xl transition-all font-medium text-sm ${tab === item.id ? 'bg-teal-50 text-teal-700 font-bold shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+              title={isMenuCollapsed ? item.label : ""}
             >
-              <item.icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <item.icon className="w-5 h-5 flex-shrink-0" />
+              {!isMenuCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
             </button>
           ))}
         </nav>
-        <div className="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 px-4">APS Prep Assistant v2.9</div>
+
+        {!isMenuCollapsed && <div className="mt-auto pt-4 border-t border-slate-100 text-xs text-slate-400 px-4 whitespace-nowrap overflow-hidden">APS Prep Assistant v2.9</div>}
       </aside>
 
       <div className="flex-1 flex flex-col h-full relative min-w-0">
